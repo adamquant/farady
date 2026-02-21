@@ -26,12 +26,20 @@ Family Member Parameters:
     --zawja: Wife
 """
 
+from __future__ import annotations
+
 from fractions import Fraction as frac
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from typing import Self, Any
 
 
-PRETTY_NAMES = {
+type HeirKey = str
+type FractionDict = dict[HeirKey, frac]
+type DistributionDict = dict[HeirKey, float]
+type CaseDict = dict[HeirKey, int | bool]
+
+
+PRETTY_NAMES: dict[HeirKey, str] = {
     "bint": "Daughter(s)",
     "ibn": "Son(s)",
     "bibn": "Granddaughter(s)",
@@ -131,16 +139,16 @@ class InheritanceCase:
     zawj: bool = False
     zawja: bool = False
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> CaseDict:
         """Convert case to dictionary format for calculation."""
-        result = {}
+        result: CaseDict = {}
         for k, v in self.__dict__.items():
             if v and v != 0:
                 result[k] = v
         return result
 
     @classmethod
-    def from_dict(cls, data: dict) -> "InheritanceCase":
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         """Create an InheritanceCase from a dictionary.
 
         Useful for loading from CSV or JSON data.
@@ -229,18 +237,18 @@ class InheritanceResult:
         denominator: The total number of shares (raas) for this inheritance case
     """
 
-    distribution: dict = field(default_factory=dict)
-    ending: Optional[str] = None
-    asib: Optional[str] = None
+    distribution: DistributionDict = field(default_factory=dict)
+    ending: str | None = None
+    asib: str | None = None
     total: float = 0.0
     status: str = "Unknown"
-    denominator: Optional[int] = None
+    denominator: int | None = None
 
-    def to_pretty_dict(self) -> dict:
+    def to_pretty_dict(self) -> dict[str, float]:
         """Convert to pretty-printed dictionary with human-readable names."""
         return {PRETTY_NAMES.get(k, k): v for k, v in self.distribution.items()}
 
-    def get_member_fraction(self, member: str) -> Optional[float]:
+    def get_member_fraction(self, member: str) -> float | None:
         """Get the fraction for a specific family member."""
         return self.distribution.get(member)
 
@@ -252,13 +260,13 @@ class InheritanceCalculator:
     the proper distribution of a deceased person's assets among their heirs.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the calculator."""
         pass
 
     def _lizakari(
         self, n_male: int, n_female: int, remaining: frac, raas: int
-    ) -> tuple:
+    ) -> tuple[frac, frac]:
         """Calculate male/female distribution for residual shares using Fractions.
 
         Males receive double the share of females.
@@ -284,7 +292,9 @@ class InheritanceCalculator:
 
         return male_share, female_share
 
-    def _zawjayn(self, new: dict, finish: dict, has_any_furoo: bool) -> dict:
+    def _zawjayn(
+        self, new: CaseDict, finish: FractionDict, has_any_furoo: bool
+    ) -> FractionDict:
         """Calculate spouse share.
 
         Husband receives 1/4 if there are furoo (descendants), 1/2 otherwise.
@@ -309,7 +319,7 @@ class InheritanceCalculator:
 
         return finish
 
-    def _kalala(self, new: dict, finish: dict) -> dict:
+    def _kalala(self, new: CaseDict, finish: FractionDict) -> FractionDict:
         """Calculate kalala shares (when no descendants or parents exist).
 
         Maternal half-siblings receive:
@@ -323,23 +333,24 @@ class InheritanceCalculator:
         Returns:
             Updated distribution dictionary
         """
-        if new.get("lium"):
-            if new.get("lium") == 1:
+        lium_val = new.get("lium")
+        if lium_val:
+            if lium_val == 1:
                 finish["lium"] = frac(1, 6)
-            elif new.get("lium") > 1:
+            elif lium_val > 1:
                 finish["lium"] = frac(1, 3)
 
         return finish
 
     def _usool(
         self,
-        new: dict,
-        finish: dict,
-        asib: Optional[str],
+        new: CaseDict,
+        finish: FractionDict,
+        asib: str | None,
         has_any_furoo: bool,
         has_m_furoo: bool,
         has_jame: bool,
-    ) -> tuple:
+    ) -> tuple[FractionDict, str | None]:
         """Calculate usool (roots) shares - parents and grandparents.
 
         Father receives 1/6 if there are descendants, otherwise may get residual.

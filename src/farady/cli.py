@@ -41,21 +41,26 @@ Examples:
     farady --ibn 1 --bint 2 --ab 1 --umm 1 --zawja
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
-from typing import Union, Dict, Any
+from collections.abc import Sequence
 
-from farady.distribution import InheritanceCase, InheritanceCalculator, PRETTY_NAMES
+from farady.distribution import (
+    InheritanceCase,
+    InheritanceCalculator,
+    InheritanceResult,
+    PRETTY_NAMES,
+)
 
 
-def format_fraction(value: Union[float, Any]) -> str:
+def format_fraction(value: float) -> str:
     """Format a fractional value for display."""
-    if hasattr(value, "numerator"):
-        return f"{float(value):.4f}"
     return f"{float(value):.4f}"
 
 
-def format_percentage(value: Union[float, Any]) -> str:
+def format_percentage(value: float) -> str:
     """Format a value as a percentage."""
     return f"{float(value) * 100:.2f}%"
 
@@ -237,9 +242,9 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def get_provided_members(args: argparse.Namespace) -> Dict[str, Any]:
+def get_provided_members(args: argparse.Namespace) -> dict[str, int | bool]:
     """Extract family members that were provided (non-zero or True)."""
-    provided = {}
+    provided: dict[str, int | bool] = {}
 
     mappings = {
         "ibn": "ibn",
@@ -276,7 +281,11 @@ def get_provided_members(args: argparse.Namespace) -> Dict[str, Any]:
     return provided
 
 
-def print_results(result, provided_members: Dict[str, Any], verbose: bool = False):
+def print_results(
+    result: InheritanceResult,
+    provided_members: dict[str, int | bool],
+    verbose: bool = False,
+) -> None:
     """Print the inheritance distribution results as a table."""
 
     print("\n" + "=" * 60)
@@ -322,7 +331,7 @@ def print_results(result, provided_members: Dict[str, Any], verbose: bool = Fals
     print()
 
 
-def main(argv=None):
+def main(argv: Sequence[str] | None = None) -> int:
     """Main entry point for the CLI."""
     parser = create_parser()
     args = parser.parse_args(argv)
@@ -334,7 +343,7 @@ def main(argv=None):
         print("\nError: At least one family member must be specified.")
         return 1
 
-    case = InheritanceCase(**provided_members)
+    case = InheritanceCase(**provided_members)  # type: ignore[arg-type]
     calculator = InheritanceCalculator()
     result = calculator.calculate(case)
 
