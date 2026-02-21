@@ -532,17 +532,18 @@ This software is NOT licensed under MIT or other permissive licenses.
 
 - **Non-Commercial**: You may not use this software for commercial purposes without written permission
 - **Share Alike**: If you modify or build upon this material, you must distribute your contributions under the same license
-- **Attribution**: You must give appropriate credit to SunnaAssets
+- **Attribution**: You must give appropriate credit to Adam Ahmed (https://github.com/adamquant)
 
 ### Enterprise & Commercial Use
 
 This license is intentionally restrictive because:
 1. Islamic inheritance law is a specialized domain requiring expert knowledge
-2. Incorrect calculations can have serious legal and financial consequences
-3. We need to maintain quality control over implementations
-4. Commercial use requires partnership with SunnaAssets
+2. Its sources are inherently 'free' and 'open' to all (Qur'an, Sunna, etc.) and therefore any commercial applications must demonstrate significant added value in layers/wrappers.
+3. Incorrect calculations can have serious legal and financial consequences
+4. We need to maintain quality control over implementations including scholarly review
+5. Commercial use requires explicit permission or licensing from the author
 
-For commercial licensing inquiries, please contact SunnaAssets.
+For commercial licensing inquiries, please contact teh author.
 
 ### Permissions
 
