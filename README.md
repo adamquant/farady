@@ -2,8 +2,8 @@
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](LICENSE)
 [![Python Version](https://img.shields.io/pypi/pyversions/farady)](https://pypi.org/project/farady/)
-[![Tests](https://github.com/adamquant/farady-dev/actions/workflows/test.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions)
-[![Coverage](https://codecov.io/gh/adamquant/farady-dev/branch/main/graph/badge.svg)](https://codecov.io/gh/adamquant/farady-dev)
+[![CI](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
+[![Release Tests](https://github.com/adamquant/farady-dev/actions/workflows/release-sa-tests.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/release-sa-tests.yml)
 
 A Python library and CLI tool for calculating Islamic inheritance distribution according to Faraid (Islamic inheritance law).
 
@@ -518,6 +518,67 @@ Run specific test:
 
 ```bash
 pytest tests/test_farady.py::TestCalculateFromDict::test_son_daughter_wife -v
+```
+
+---
+
+## Branching Model
+
+This project uses a **hybrid branching model** combining Trunk-Based Development (TBD) for core development and Gitflow for production releases to SunnaAssets.
+
+### Branch Architecture
+
+```
+main ──(force push)──> release-sa ──(PR only)──> prod-sa
+  │                          │                       │
+  │                      [Tests]                 [Dispatch]
+  │                      - Smoke                     │
+  │                      - Contract                  │
+  │                      - E2E                       ▼
+  │                                         sunnaassets repos
+```
+
+### Branch Roles
+
+| Branch | Purpose | Workflow |
+|--------|---------|----------|
+| `main` | Development trunk | Feature branches merge here via PR |
+| `release-sa` | Pre-release staging | Force pushed from `main` when ready |
+| `prod-sa` | Production (SunnaAssets) | Only accepts PRs from `release-sa` |
+
+### Release Workflow
+
+1. **Develop on `main`** using TBD (feature branches → PR → merge)
+2. **Stage release** by force pushing to `release-sa`:
+   ```bash
+   git push origin main:release-sa --force
+   ```
+3. **Integration tests run** on `release-sa` (Lambda smoke, API contract, E2E)
+4. **Create PR** from `release-sa` to `prod-sa`
+5. **Merge triggers**:
+   - Automatic version tag (`vX.Y.Z-sa.N`)
+   - `repository_dispatch` to sunnaassets repos
+   - Lambda deployments to production
+
+### Versioning
+
+Releases to SunnaAssets use the format `vX.Y.Z-sa.N`:
+
+- `X.Y.Z` = Semantic version (major.minor.patch)
+- `sa` = SunnaAssets release identifier
+- `N` = Release number for that version
+
+Examples: `v0.1.0-sa.1`, `v0.1.0-sa.2`, `v0.2.0-sa.1`
+
+### Version Management
+
+Use the version script for bumping:
+
+```bash
+python scripts/version.py current           # Show current version
+python scripts/version.py bump minor        # Bump minor version
+python scripts/version.py bump major        # Bump major version
+python scripts/version.py tag               # Create SA release tag
 ```
 
 ---
