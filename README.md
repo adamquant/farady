@@ -1,5 +1,10 @@
 # Farady - Islamic Inheritance Distribution Calculator
 
+[![Python Version](https://img.shields.io/pypi/pyversions/farady)](https://pypi.org/project/farady/)
+[![Tests](https://github.com/adamquant/farady-dev/actions/workflows/test.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/test.yml)
+[![Coverage](https://codecov.io/gh/adamquant/farady-dev/branch/main/graph/badge.svg)](https://codecov.io/gh/adamquant/farady-dev)
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](LICENSE)
+
 A Python library and CLI tool for calculating Islamic inheritance distribution according to Faraid (Islamic inheritance law).
 
 ## Table of Contents
