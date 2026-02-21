@@ -1,0 +1,7 @@
+ibn,bint,zawja,zawj,expected_status,notes
+1,1,True,False,Complete,Son + daughter + wife (taseeb)
+2,0,True,False,Complete,One son + wife
+0,2,True,False,Complete,Two daughters + wife (2/3 + 1/4)
+0,1,True,False,Complete,One daughter + wife (1/2 + 1/4)
+1,0,False,True,Complete,One son + husband
+0,1,False,True,Complete,One daughter + husband (1/2 + 1/2)
