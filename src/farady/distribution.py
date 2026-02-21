@@ -991,6 +991,8 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
         family_data: Dictionary with family member counts.
                      Example: {'ibn': 2, 'bint': 1, 'zawja': True}
                      String values like '1', 'True', 'yes' are also handled.
+                     Accepts numpy types (np.str_, np.int64, etc.) for compatibility
+                     with numpy-generated data.
 
     Returns:
         InheritanceResult with distribution and metadata
@@ -999,6 +1001,16 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
         >>> data = {'ibn': 2, 'bint': 1, 'zawja': True}
         >>> result = calculate_from_dict(data)
     """
+    normalized = {}
+    for k, v in family_data.items():
+        key = str(k) if hasattr(k, "item") and "numpy" in type(k).__module__ else k
+        if hasattr(v, "item") and "numpy" in type(v).__module__:
+            val = v.item()
+        else:
+            val = v
+        normalized[key] = val
+    family_data = normalized
+
     valid_fields = {
         "ibn",
         "bint",
