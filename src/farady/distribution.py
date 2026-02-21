@@ -55,6 +55,33 @@ PRETTY_NAMES = {
     "all_full_siblings_maternal_half": "All full siblings and maternal half siblings",
 }
 
+HEIR_FIELDS = {
+    "ibn",
+    "bint",
+    "iibn",
+    "bibn",
+    "iiibn",
+    "biibn",
+    "umm",
+    "jadda",
+    "ab",
+    "jadd",
+    "lium",
+    "shaqiqa",
+    "shaqiq",
+    "uliab",
+    "aliab",
+    "ibnamm_sh",
+    "ibnamm_liab",
+    "amm",
+    "zawj",
+    "zawja",
+}
+
+BOOLEAN_HEIRS = {"zawj", "zawja"}
+
+COUNT_HEIRS = HEIR_FIELDS - BOOLEAN_HEIRS
+
 
 @dataclass
 class InheritanceCase:
