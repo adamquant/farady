@@ -972,6 +972,121 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
         >>> data = {'ibn': 2, 'bint': 1, 'zawja': True}
         >>> result = calculate_from_dict(data)
     """
+    valid_fields = {
+        "ibn",
+        "bint",
+        "iibn",
+        "bibn",
+        "iiibn",
+        "biibn",
+        "umm",
+        "jadda",
+        "ab",
+        "jadd",
+        "lium",
+        "shaqiqa",
+        "shaqiq",
+        "uliab",
+        "aliab",
+        "ibnamm_sh",
+        "ibnamm_liab",
+        "amm",
+        "zawj",
+        "zawja",
+    }
+    boolean_fields = {"zawj", "zawja"}
+    count_fields = valid_fields - boolean_fields
+
+    for key, value in family_data.items():
+        if key not in valid_fields:
+            return InheritanceResult(
+                distribution={},
+                ending="invalid_input",
+                asib=None,
+                total=0.0,
+                status="Failed",
+                denominator=None,
+            )
+
+        if key in boolean_fields:
+            if isinstance(value, bool):
+                continue
+            if isinstance(value, str):
+                if value.strip().lower() not in (
+                    "true",
+                    "false",
+                    "1",
+                    "0",
+                    "yes",
+                    "no",
+                    "",
+                ):
+                    return InheritanceResult(
+                        distribution={},
+                        ending="invalid_input",
+                        asib=None,
+                        total=0.0,
+                        status="Failed",
+                        denominator=None,
+                    )
+            elif not isinstance(value, (int, float)):
+                return InheritanceResult(
+                    distribution={},
+                    ending="invalid_input",
+                    asib=None,
+                    total=0.0,
+                    status="Failed",
+                    denominator=None,
+                )
+        else:
+            if isinstance(value, (int, float)):
+                if value < 0:
+                    return InheritanceResult(
+                        distribution={},
+                        ending="invalid_input",
+                        asib=None,
+                        total=0.0,
+                        status="Failed",
+                        denominator=None,
+                    )
+            elif isinstance(value, str):
+                if value.strip().lower() in ("true", "yes"):
+                    continue
+                if value.strip().lower() in ("false", "no", ""):
+                    continue
+                try:
+                    int_val = int(value)
+                    if int_val < 0:
+                        return InheritanceResult(
+                            distribution={},
+                            ending="invalid_input",
+                            asib=None,
+                            total=0.0,
+                            status="Failed",
+                            denominator=None,
+                        )
+                except ValueError:
+                    try:
+                        int(float(value))
+                    except ValueError:
+                        return InheritanceResult(
+                            distribution={},
+                            ending="invalid_input",
+                            asib=None,
+                            total=0.0,
+                            status="Failed",
+                            denominator=None,
+                        )
+            elif not isinstance(value, bool):
+                return InheritanceResult(
+                    distribution={},
+                    ending="invalid_input",
+                    asib=None,
+                    total=0.0,
+                    status="Failed",
+                    denominator=None,
+                )
+
     zawj_val = family_data.get("zawj", False)
     zawja_val = family_data.get("zawja", False)
 
