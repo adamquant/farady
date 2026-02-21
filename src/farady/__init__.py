@@ -26,6 +26,9 @@ from farady.distribution import (
     load_csv_cases,
     process_csv_results,
     PRETTY_NAMES,
+    HEIR_FIELDS,
+    COUNT_HEIRS,
+    BOOLEAN_HEIRS,
 )
 
 from farady import cli
@@ -39,6 +42,9 @@ __all__ = [
     "load_csv_cases",
     "process_csv_results",
     "PRETTY_NAMES",
+    "HEIR_FIELDS",
+    "COUNT_HEIRS",
+    "BOOLEAN_HEIRS",
     "cli",
 ]
 
