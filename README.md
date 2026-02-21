@@ -1,5 +1,10 @@
 # Farady - Islamic Inheritance Distribution Calculator
 
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](LICENSE)
+[![Python Version](https://img.shields.io/pypi/pyversions/farady)](https://pypi.org/project/farady/)
+[![Tests](https://github.com/adamquant/farady-dev/actions/workflows/test.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions)
+[![Coverage](https://codecov.io/gh/adamquant/farady-dev/branch/main/graph/badge.svg)](https://codecov.io/gh/adamquant/farady-dev)
+
 A Python library and CLI tool for calculating Islamic inheritance distribution according to Faraid (Islamic inheritance law).
 
 ## Table of Contents
@@ -519,4 +524,33 @@ pytest tests/test_farady.py::TestCalculateFromDict::test_son_daughter_wife -v
 
 ## License
 
-Creative Commons Attribution Non-Commercial Share Alike 4.0
+**Creative Commons Attribution Non-Commercial Share Alike 4.0 (CC BY-NC-SA 4.0)**
+
+This software is NOT licensed under MIT or other permissive licenses.
+
+### Why this license?
+
+- **Non-Commercial**: You may not use this software for commercial purposes without written permission
+- **Share Alike**: If you modify or build upon this material, you must distribute your contributions under the same license
+- **Attribution**: You must give appropriate credit to SunnaAssets
+
+### Enterprise & Commercial Use
+
+This license is intentionally restrictive because:
+1. Islamic inheritance law is a specialized domain requiring expert knowledge
+2. Incorrect calculations can have serious legal and financial consequences
+3. We need to maintain quality control over implementations
+4. Commercial use requires partnership with SunnaAssets
+
+For commercial licensing inquiries, please contact SunnaAssets.
+
+### Permissions
+
+You are free to:
+- Share: Copy and redistribute the material in any medium or format
+- Adapt: Remix, transform, and build upon the material
+
+Under the following terms:
+- Attribution: You must give appropriate credit, provide a link to the license, and indicate if changes were made
+- NonCommercial: You may not use the material for commercial purposes
+- ShareAlike: If you remix, transform, or build upon the material, you must distribute your contributions under the same license
