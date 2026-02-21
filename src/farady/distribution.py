@@ -972,6 +972,24 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
         >>> data = {'ibn': 2, 'bint': 1, 'zawja': True}
         >>> result = calculate_from_dict(data)
     """
+    zawj_val = family_data.get("zawj", False)
+    zawja_val = family_data.get("zawja", False)
+
+    if isinstance(zawj_val, str):
+        zawj_val = zawj_val.strip().lower() in ("true", "1", "yes")
+    if isinstance(zawja_val, str):
+        zawja_val = zawja_val.strip().lower() in ("true", "1", "yes")
+
+    if zawj_val and zawja_val:
+        return InheritanceResult(
+            distribution={},
+            ending="invalid_input",
+            asib=None,
+            total=0.0,
+            status="Failed",
+            denominator=None,
+        )
+
     case = InheritanceCase.from_dict(family_data)
     calculator = InheritanceCalculator()
     return calculator.calculate(case)
