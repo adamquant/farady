@@ -45,6 +45,7 @@ warn_unused_ignores = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+norecursedirs = ["tests_wip", ".venv", "*.egg-info"]
 addopts = "-v --tb=short --cov=farady --cov-report=term-missing"
 filterwarnings = [
     "ignore::DeprecationWarning",
@@ -67,5 +68,6 @@ exclude_lines = [
 [dependency-groups]
 dev = [
     "pytest (>=9.0.2,<10.0.0)",
-    "pytest-cov (>=7.0.0,<8.0.0)"
+    "pytest-cov (>=7.0.0,<8.0.0)",
+    "numpy (>=2.4.2,<3.0.0)"
 ]
