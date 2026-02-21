@@ -8,7 +8,45 @@ permissions:
   contents: write
 
 jobs:
+  validate-source:
+    runs-on: ubuntu-latest
+    outputs:
+      is_valid: ${{ steps.check.outputs.is_valid }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+    
+    - name: Check if push is from release-sa merge
+      id: check
+      run: |
+        if [ "${{ github.event.created }}" = "true" ]; then
+          echo "Branch was created, allowing..."
+          echo "is_valid=true" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
+        PARENT_BRANCH=$(git branch -r --contains HEAD^1 2>/dev/null | grep -o 'origin/[^ ]*' | head -1 || echo "")
+        COMMIT_MSG=$(git log -1 --pretty=%B)
+        
+        echo "Commit message: $COMMIT_MSG"
+        echo "Parent branch: $PARENT_BRANCH"
+        
+        if echo "$COMMIT_MSG" | grep -q "Merge pull request.*from.*release-sa"; then
+          echo "Valid: PR merge from release-sa"
+          echo "is_valid=true" >> $GITHUB_OUTPUT
+        elif echo "$COMMIT_MSG" | grep -q "release-sa"; then
+          echo "Valid: Commit references release-sa"
+          echo "is_valid=true" >> $GITHUB_OUTPUT
+        else
+          echo "WARNING: This push does not appear to be from a release-sa merge"
+          echo "Direct pushes to prod-sa are discouraged. Use PR from release-sa."
+          echo "is_valid=false" >> $GITHUB_OUTPUT
+        fi
+
   version-and-deploy:
+    needs: validate-source
+    if: needs.validate-source.outputs.is_valid == 'true'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
