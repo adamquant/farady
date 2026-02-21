@@ -1,0 +1,94 @@
+name: Deploy to SunnaAssets
+
+on:
+  push:
+    branches: [prod-sa]
+
+permissions:
+  contents: write
+
+jobs:
+  version-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.FARADY_RELEASE_TOKEN }}
+    
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    
+    - name: Configure Git
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+    
+    - name: Get current version
+      id: version
+      run: |
+        CURRENT_VERSION=$(python -c "from farady import __version__; print(__version__)")
+        echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+        echo "Current version: $CURRENT_VERSION"
+    
+    - name: Calculate new SA version
+      id: new_version
+      run: |
+        CURRENT_VERSION="${{ steps.version.outputs.current_version }}"
+        
+        LATEST_TAG=$(git tag -l "v${CURRENT_VERSION}-sa.*" | sort -V | tail -1)
+        
+        if [ -z "$LATEST_TAG" ]; then
+          NEW_SA_NUM=1
+        else
+          LAST_SA_NUM=$(echo "$LATEST_TAG" | sed "s/v${CURRENT_VERSION}-sa.//")
+          NEW_SA_NUM=$((LAST_SA_NUM + 1))
+        fi
+        
+        NEW_TAG="v${CURRENT_VERSION}-sa.${NEW_SA_NUM}"
+        echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+        echo "new_sa_num=$NEW_SA_NUM" >> $GITHUB_OUTPUT
+        echo "New tag will be: $NEW_TAG"
+    
+    - name: Create and push tag
+      run: |
+        git tag -a "${{ steps.new_version.outputs.new_tag }}" -m "SunnaAssets release ${{ steps.new_version.outputs.new_tag }}"
+        git push origin "${{ steps.new_version.outputs.new_tag }}"
+    
+    - name: Trigger sunnaassets/free-estimate deploy
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.FARADY_RELEASE_TOKEN }}
+        repository: sunnaassets/free-estimate
+        event-type: farady-release
+        client-payload: |
+          {
+            "version": "${{ steps.new_version.outputs.new_tag }}",
+            "branch": "prod-sa",
+            "sha": "${{ github.sha }}"
+          }
+    
+    - name: Trigger sunnaassets/onewasiya deploy
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.FARADY_RELEASE_TOKEN }}
+        repository: sunnaassets/onewasiya
+        event-type: farady-release
+        client-payload: |
+          {
+            "version": "${{ steps.new_version.outputs.new_tag }}",
+            "branch": "prod-sa",
+            "sha": "${{ github.sha }}"
+          }
+    
+    - name: Summary
+      run: |
+        echo "## Release Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Version:** ${{ steps.new_version.outputs.new_tag }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered deployments to:**" >> $GITHUB_STEP_SUMMARY
+        echo "- sunnaassets/free-estimate" >> $GITHUB_STEP_SUMMARY
+        echo "- sunnaassets/onewasiya" >> $GITHUB_STEP_SUMMARY
