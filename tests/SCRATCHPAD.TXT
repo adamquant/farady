@@ -1,0 +1,20 @@
+{
+np.str_('bibn'): np.int64(6), 
+np.str_('lium'): np.int64(7), 
+np.str_('jadd'): np.int64(8), 
+np.str_('shaqiq'): np.int64(0), 
+np.str_('umm'): np.int64(5), 
+np.str_('ibnamm_liab'): np.int64(7), 
+np.str_('iiibn'): np.int64(9), 
+np.str_('uliab'): np.int64(1), 
+np.str_('iibn'): np.int64(8), 
+np.str_('aliab'): np.int64(5)
+
+}
+
+
+
+
+InheritanceResult(distribution={}, ending='invalid_input', asib=None, total=0.0, 
+status='Failed', denominator=None)
+0.0

@@ -31,6 +31,8 @@ from farady.distribution import (
     BOOLEAN_HEIRS,
 )
 
+from farady.tools_for_testing import build_random_case
+
 from farady import cli
 
 __all__ = [
@@ -45,6 +47,7 @@ __all__ = [
     "HEIR_FIELDS",
     "COUNT_HEIRS",
     "BOOLEAN_HEIRS",
+    "build_random_case",
     "cli",
 ]
 

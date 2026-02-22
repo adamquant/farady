@@ -45,6 +45,8 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+manual_reviews/
+
 
 # Translations
 *.mo
