@@ -249,6 +249,7 @@ class InheritanceResult:
     total: float                    # Total of all shares
     status: str                     # Calculation status
     denominator: Optional[int]      # Total shares (raas)
+    numerators: dict                # Heir -> numerator (share count)
 ```
 
 ### Field Details
@@ -318,6 +319,18 @@ result.denominator  # 24
 
 # For will documents:
 # "Divide estate into 24 shares: 3 to Wife, 14 to Son(s), 7 to Daughter(s)"
+```
+
+#### `numerators: Dict[str, int]`
+
+Dictionary mapping heir names to their share count (numerator). Combined with `denominator`, gives exact fractions.
+
+```python
+result.numerators
+# {'zawja': 3, 'ibn': 14, 'bint': 7}
+
+# Combined with denominator (24):
+# Wife: 3/24, Son(s): 14/24, Daughter(s): 7/24
 ```
 
 ### Result Methods

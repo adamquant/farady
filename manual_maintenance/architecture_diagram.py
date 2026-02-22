@@ -89,6 +89,7 @@ flowchart TB
         RESULT_TOTAL["total: float"]
         RESULT_STATUS["status: str"]
         RESULT_DENOM["denominator: int"]
+        RESULT_NUMERS["numerators: Dict[str, int]"]
     end
 
     subgraph OUT_PROC["OUTPUT PROCESSING"]
@@ -138,7 +139,7 @@ flowchart TB
     AWL & TASEEB & RADD --> RESULT
 
     %% Result to output sockets
-    RESULT --> RESULT_DICT & RESULT_ENDING & RESULT_ASIB & RESULT_TOTAL & RESULT_STATUS & RESULT_DENOM
+    RESULT --> RESULT_DICT & RESULT_ENDING & RESULT_ASIB & RESULT_TOTAL & RESULT_STATUS & RESULT_DENOM & RESULT_NUMERS
 
     %% Output processing flows (matched to inputs)
     CLI_USER -.->|CLI uses| CLI_FORMAT --> CLI_PRINT
@@ -161,7 +162,7 @@ flowchart TB
     class LAMBDA_FE_HANDLER,LAMBDA_FE_EXTRACT,LAMBDA_FE_WRAPPER,LAMBDA_OW_HANDLER,LAMBDA_OW_EXTRACT,LAMBDA_OW_GETFAM,LAMBDA_OW_WRAPPER lambda
     class CALC_DICT,CALC_KWARGS,CASE_FROM_DICT,CSV_LOADER converge
     class CALCULATOR,ZAWJAYN,USOOL,FUROO,HAWASHI,KALALA,AWL,TASEEB,RADD,RESULT core
-    class RESULT_DICT,RESULT_ENDING,RESULT_ASIB,RESULT_TOTAL,RESULT_STATUS,RESULT_DENOM,CLI_FORMAT,CLI_PRINT,PRETTY_FE,CREATE_PDF,SEND_EMAIL,EMAIL_OUT,FORMAT_DOC,GEN_WILL,SAVE_DOC,S3_LOCAL output
+    class RESULT_DICT,RESULT_ENDING,RESULT_ASIB,RESULT_TOTAL,RESULT_STATUS,RESULT_DENOM,RESULT_NUMERS,CLI_FORMAT,CLI_PRINT,PRETTY_FE,CREATE_PDF,SEND_EMAIL,EMAIL_OUT,FORMAT_DOC,GEN_WILL,SAVE_DOC,S3_LOCAL output
 ```
 """
 
@@ -231,6 +232,7 @@ This diagram shows the complete data flow through the farady-py library, from ex
 | `total` | `float` | Total shares accounted for (should be 1.0) |
 | `status` | `str` | Complete/Failed/Unknown |
 | `denominator` | `int` | Total number of shares (raas) |
+| `numerators` | `Dict[str, int]` | Heir name → share count (numerator) |
 
 ### Output Processing
 
