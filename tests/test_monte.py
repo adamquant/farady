@@ -63,6 +63,57 @@ def save_results_to_disk(results):
     return output_file
 
 
+def save_failing_indices(all_failures, timestamp=None):
+    """Save failing indices to JSON file for easy loading.
+
+    Args:
+        all_failures: Dict of test_name -> {category -> [indices]}
+        timestamp: Optional timestamp string. If None, uses current time.
+
+    Returns:
+        Path to saved file
+    """
+    output_dir = Path(__file__).parent / "output"
+    output_dir.mkdir(exist_ok=True)
+
+    if timestamp is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    output_file = output_dir / f"failing_indices_{timestamp}.json"
+
+    with open(output_file, "w") as f:
+        json.dump(all_failures, f, indent=2)
+
+    return output_file
+
+
+def run_all_tests_and_collect_failures(results):
+    """Run all monte carlo tests and collect failing indices.
+
+    Returns:
+        Dict of test_name -> {category -> [indices]}
+    """
+    all_failures = {}
+
+    # Define all tests here
+    tests = [
+        ("test_total_always_one", lambda r: abs(r.total - 1.0) >= 1e-9),
+        ("test_status_is_complete", lambda r: r.status != "Complete"),
+    ]
+
+    for test_name, predicate in tests:
+        test_failures = {}
+        for category in ["ordinary", "no_fare", "hawashi"]:
+            failures = collect_failing_indices(results, category, predicate)
+            if failures:
+                test_failures[category] = failures
+
+        if test_failures:
+            all_failures[test_name] = test_failures
+
+    return all_failures
+
+
 # Cache results so we don't recompute for each test
 _results = None
 
@@ -168,10 +219,30 @@ def test_status_is_complete():
 # ===========================================
 
 
-# Save results on module load (for debugging)
+# Save results on module load (for debugging and collect failing indices)
 if __name__ != "__main__":
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     try:
+        # Save full results
         output_path = save_results_to_disk(get_results())
         print(f"Results saved to: {output_path}")
     except Exception as e:
         print(f"Warning: Could not save results: {e}")
+
+    try:
+        # Run all tests and collect failing indices
+        results = get_results()
+        all_failures = run_all_tests_and_collect_failures(results)
+
+        # Save failing indices
+        indices_path = save_failing_indices(all_failures, timestamp)
+        print(f"Failing indices saved to: {indices_path}")
+
+        if all_failures:
+            print(f"\nFailed tests: {list(all_failures.keys())}")
+            for test_name, categories in all_failures.items():
+                total_failed = sum(len(indices) for indices in categories.values())
+                print(f"  {test_name}: {total_failed} failures")
+    except Exception as e:
+        print(f"Warning: Could not save failing indices: {e}")
