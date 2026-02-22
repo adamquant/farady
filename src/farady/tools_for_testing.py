@@ -127,9 +127,9 @@ def build_random_case(
     if n_heirs > 0:
         selected_heirs = rng.choice(available_heirs, size=n_heirs, replace=False)
 
-        # Assign random counts to each selected heir + stupid numpy int dtype doesnt cast to json strings for later!
+        # Assign random counts to each selected heir
         for heir in selected_heirs:
-            case[heir] = int(rng.integers(0, max_count + 1))
+            case[str(heir)] = int(rng.integers(0, max_count + 1))
 
     # Apply forced heirs (overrides random selections)
     if force_heirs:
