@@ -74,26 +74,98 @@ def get_results():
     return _results
 
 
+# ========== FAILING INDICES TRACKING ==========
+# Reusable boilerplate for tracking failing indices in monte carlo tests.
+# Copy this section when adding new test functions.
+# ---------------------------------------------
+
+
+def collect_failing_indices(results, category, predicate):
+    """Collect indices where predicate(result) returns True.
+
+    Args:
+        results: Dict of category -> list of (case, result) tuples
+        category: Category name (e.g., 'ordinary', 'no_fare', 'hawashi')
+        predicate: Function that takes result and returns True if failed
+
+    Returns:
+        List of indices that failed the predicate
+    """
+    return [i for i, (_, r) in enumerate(results[category]) if predicate(r)]
+
+
+def run_test_and_collect_failures(test_name, results, predicate, description):
+    """Run a test across all categories and collect failing indices.
+
+    Args:
+        test_name: Name of the test (for error messages)
+        results: Dict of category -> list of (case, result) tuples
+        predicate: Function(result) -> bool, returns True if test fails
+        description: Description of what the test checks (for error message)
+
+    Returns:
+        Dict of category -> list of failing indices
+
+    Raises:
+        AssertionError: If any failures found, with formatted error message
+    """
+    all_failures = {}
+    for category in ["ordinary", "no_fare", "hawashi"]:
+        failures = collect_failing_indices(results, category, predicate)
+        if failures:
+            all_failures[category] = failures
+
+    if all_failures:
+        error_parts = []
+        for cat, indices in all_failures.items():
+            error_parts.append(f"{cat}: indices {indices[:10]}...")
+        raise AssertionError(f"{test_name}: {'; '.join(error_parts)}")
+
+    return all_failures
+
+
+# ---------------------------------------------
+# End of failing indices boilerplate
+# ===========================================
+
+
 def test_total_always_one():
     """All inheritance distributions should sum to 1.0."""
     results = get_results()
-
-    for category in ["ordinary", "no_fare", "hawashi"]:
-        totals = [r.total for _, r in results[category]]
-        failed = [i for i, t in enumerate(totals) if abs(t - 1.0) >= 1e-9]
-        assert not failed, f"{category}: indices {failed[:10]}... have total != 1.0"
+    run_test_and_collect_failures(
+        "test_total_always_one",
+        results,
+        lambda r: abs(r.total - 1.0) >= 1e-9,
+        "total != 1.0",
+    )
 
 
 def test_status_is_complete():
     """All calculations should complete successfully."""
     results = get_results()
+    run_test_and_collect_failures(
+        "test_status_is_complete",
+        results,
+        lambda r: r.status != "Complete",
+        "status != Complete",
+    )
 
-    for category in ["ordinary", "no_fare", "hawashi"]:
-        statuses = [r.status for _, r in results[category]]
-        failed = [i for i, s in enumerate(statuses) if s != "Complete"]
-        assert not failed, (
-            f"{category}: indices {failed[:10]}... have status != Complete"
-        )
+
+# ===========================================
+# COPY BOILERPLATE BELOW FOR NEW TEST FUNCTIONS
+# ===========================================
+# Example:
+#
+# def test_your_new_check():
+#     """Description of what this test checks."""
+#     results = get_results()
+#     run_test_and_collect_failures(
+#         "test_your_new_check",
+#         results,
+#         lambda r: <your condition here>,
+#         "<description of failure>"
+#     )
+# ===========================================
 
 
 # Save results on module load (for debugging)
