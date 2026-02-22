@@ -43,12 +43,13 @@ def compute_all_results():
     return results
 
 
-def save_results_to_disk(results):
+def save_results_to_disk(results, timestamp=None):
     """Save results to output folder with timestamp."""
     output_dir = Path(__file__).parent / "output"
     output_dir.mkdir(exist_ok=True)
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if timestamp is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = output_dir / f"monte_results_{timestamp}.json"
 
     output_data = {}
@@ -221,11 +222,12 @@ def test_status_is_complete():
 
 # Save results on module load (for debugging and collect failing indices)
 if __name__ != "__main__":
+    # Generate timestamp ONCE and use for both files
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     try:
         # Save full results
-        output_path = save_results_to_disk(get_results())
+        output_path = save_results_to_disk(get_results(), timestamp)
         print(f"Results saved to: {output_path}")
     except Exception as e:
         print(f"Warning: Could not save results: {e}")
@@ -235,7 +237,7 @@ if __name__ != "__main__":
         results = get_results()
         all_failures = run_all_tests_and_collect_failures(results)
 
-        # Save failing indices
+        # Save failing indices (same timestamp)
         indices_path = save_failing_indices(all_failures, timestamp)
         print(f"Failing indices saved to: {indices_path}")
 
