@@ -73,3 +73,7 @@ Thumbs.db
 
 # Personal todo list
 todo.md
+
+# Local debugging logs
+logs/
+*.log

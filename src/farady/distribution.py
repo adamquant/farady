@@ -32,6 +32,16 @@ from fractions import Fraction as frac
 from dataclasses import dataclass, field
 from typing import Self, Any
 
+from farady.logging_config import (
+    get_logger,
+    log_calculation_start,
+    log_calculation_end,
+    log_validation_error,
+    log_calculation_step,
+)
+
+_logger = get_logger(__name__)
+
 
 type HeirKey = str
 type FractionDict = dict[HeirKey, frac]
@@ -209,7 +219,12 @@ class InheritanceCase:
                                 try:
                                     kwargs[key] = int(float(value))
                                 except ValueError:
-                                    pass
+                                    log_validation_error(
+                                        _logger,
+                                        field=key,
+                                        value=value,
+                                        reason="Could not convert string to int",
+                                    )
                 elif isinstance(value, bool):
                     if key in boolean_fields:
                         kwargs[key] = value
@@ -776,6 +791,8 @@ class InheritanceCalculator:
         """
         new = case.to_dict()
 
+        log_calculation_start(_logger, {"case": new})
+
         ending = None
         asib = None
 
@@ -936,14 +953,19 @@ class InheritanceCalculator:
         total = sum(finish.values())
 
         if total > 1:
+            log_calculation_step(_logger, "awl", {"total": float(total), "raas": raas})
             finish = self._awl(total, finish, raas)
             ending = "awl"
 
         if total < 1:
             if asib_present or asib:
+                log_calculation_step(
+                    _logger, "taseeb", {"total": float(total), "asib": asib}
+                )
                 finish, asib = self._taseeb(total, new, finish, asib, raas)
                 ending = "taseeb"
             elif total > 0:
+                log_calculation_step(_logger, "radd", {"total": float(total)})
                 finish, ending = self._radd(total, finish, raas)
 
         finish = {k: v for k, v in finish.items() if v != 0}
@@ -986,6 +1008,20 @@ class InheritanceCalculator:
             denominator=denominator,
             numerators=numerators,
         )
+
+        log_calculation_end(
+            _logger,
+            {
+                "distribution": finish,
+                "ending": ending,
+                "asib": asib,
+                "total": final_total,
+                "status": status,
+                "denominator": denominator,
+            },
+        )
+
+        return result
 
 
 def calculate_inheritance(**family_members) -> InheritanceResult:
@@ -1064,6 +1100,12 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
 
     for key, value in family_data.items():
         if key not in valid_fields:
+            log_validation_error(
+                _logger,
+                field=key,
+                value=value,
+                reason="Unknown field name",
+            )
             return InheritanceResult(
                 distribution={},
                 ending="invalid_input",
@@ -1086,6 +1128,12 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                     "no",
                     "",
                 ):
+                    log_validation_error(
+                        _logger,
+                        field=key,
+                        value=value,
+                        reason="Invalid boolean field value",
+                    )
                     return InheritanceResult(
                         distribution={},
                         ending="invalid_input",
@@ -1095,6 +1143,12 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                         denominator=None,
                     )
             elif not isinstance(value, (int, float)):
+                log_validation_error(
+                    _logger,
+                    field=key,
+                    value=value,
+                    reason="Invalid type for boolean field",
+                )
                 return InheritanceResult(
                     distribution={},
                     ending="invalid_input",
@@ -1106,6 +1160,12 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
         else:
             if isinstance(value, (int, float)):
                 if value < 0:
+                    log_validation_error(
+                        _logger,
+                        field=key,
+                        value=value,
+                        reason="Negative count value",
+                    )
                     return InheritanceResult(
                         distribution={},
                         ending="invalid_input",
@@ -1122,6 +1182,12 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                 try:
                     int_val = int(value)
                     if int_val < 0:
+                        log_validation_error(
+                            _logger,
+                            field=key,
+                            value=value,
+                            reason="Negative count value from string",
+                        )
                         return InheritanceResult(
                             distribution={},
                             ending="invalid_input",
@@ -1134,6 +1200,12 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                     try:
                         int(float(value))
                     except ValueError:
+                        log_validation_error(
+                            _logger,
+                            field=key,
+                            value=value,
+                            reason="Could not convert string to int for count field",
+                        )
                         return InheritanceResult(
                             distribution={},
                             ending="invalid_input",
@@ -1143,6 +1215,12 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                             denominator=None,
                         )
             elif not isinstance(value, bool):
+                log_validation_error(
+                    _logger,
+                    field=key,
+                    value=value,
+                    reason="Invalid type for count field",
+                )
                 return InheritanceResult(
                     distribution={},
                     ending="invalid_input",
@@ -1161,6 +1239,12 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
         zawja_val = zawja_val.strip().lower() in ("true", "1", "yes")
 
     if zawj_val and zawja_val:
+        log_validation_error(
+            _logger,
+            field="zawj/zawja",
+            value=f"zawj={zawj_val}, zawja={zawja_val}",
+            reason="Both husband and wife present (invalid)",
+        )
         return InheritanceResult(
             distribution={},
             ending="invalid_input",
