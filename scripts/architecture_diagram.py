@@ -9,7 +9,7 @@ This script creates a Mermaid.js flowchart diagram showing:
 - Output processing matched to inputs
 
 Usage:
-    python manual_maintenance/architecture_diagram.py
+    poetry run python scripts/architecture_diagram.py
 
 Outputs:
     - docs/architecture.md (Mermaid diagram in markdown)
@@ -336,6 +336,8 @@ def render_png(md_path: Path, png_path: Path) -> bool:
                 "white",
                 "-t",
                 "default",
+                "--scale",
+                "4",
             ],
             capture_output=True,
             text=True,

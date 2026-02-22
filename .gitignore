@@ -77,3 +77,6 @@ todo.md
 # Local debugging logs
 logs/
 *.log
+
+# Test output (can be large)
+tests/output/
