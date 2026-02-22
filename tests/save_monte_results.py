@@ -40,6 +40,7 @@ def result_to_dict(result):
         "total": result.total,
         "status": result.status,
         "denominator": result.denominator,
+        "numerators": result.numerators,
     }
 
 

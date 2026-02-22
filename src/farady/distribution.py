@@ -250,6 +250,7 @@ class InheritanceResult:
         total: Total portion accounted for
         status: Calculation status (Complete, Failed, Unknown)
         denominator: The total number of shares (raas) for this inheritance case
+        numerators: Dict of heir names to their share numerator (heir -> numerator)
     """
 
     distribution: DistributionDict = field(default_factory=dict)
@@ -258,6 +259,7 @@ class InheritanceResult:
     total: float = 0.0
     status: str = "Unknown"
     denominator: int | None = None
+    numerators: dict = field(default_factory=dict)
 
     def to_pretty_dict(self) -> dict[str, float]:
         """Convert to pretty-printed dictionary with human-readable names."""
@@ -985,13 +987,26 @@ class InheritanceCalculator:
 
         final_total = sum(finish.values())
 
-        result = InheritanceResult(
+        # Calculate numerators for each heir
+        numerators = {}
+        if denominator:
+            for heir, fraction in finish.items():
+                if hasattr(fraction, "numerator"):
+                    # Convert fraction to numerator: (numerator / denominator) * denominator
+                    numerators[heir] = int(
+                        fraction.numerator * denominator / fraction.denominator
+                    )
+                elif isinstance(fraction, (int, float)) and fraction > 0:
+                    numerators[heir] = int(fraction * denominator)
+
+        return InheritanceResult(
             distribution=finish,
             ending=ending,
             asib=asib,
             total=final_total,
             status=status,
             denominator=denominator,
+            numerators=numerators,
         )
 
         log_calculation_end(
