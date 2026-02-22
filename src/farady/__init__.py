@@ -31,6 +31,11 @@ from farady.distribution import (
     BOOLEAN_HEIRS,
 )
 
+from farady.logging_config import (
+    get_logger,
+    get_log_dir,
+)
+
 from farady.tools_for_testing import build_random_case
 
 from farady import cli
@@ -49,6 +54,8 @@ __all__ = [
     "BOOLEAN_HEIRS",
     "build_random_case",
     "cli",
+    "get_logger",
+    "get_log_dir",
 ]
 
 __version__ = "0.1.0"
