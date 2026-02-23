@@ -34,8 +34,6 @@ where = ["src"]
 
 [tool.setuptools_scm]
 write_to = "src/farady/_version.py"
-version_scheme = "no-guess-dev"
-local_scheme = "node-and-date"
 
 [tool.black]
 line-length = 100

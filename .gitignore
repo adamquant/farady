@@ -55,11 +55,13 @@ manual_reviews/
 # Environments
 .env
 .venv
+.venv313
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+farady/
 
 # IDE
 .idea/
@@ -80,6 +82,9 @@ logs/
 
 # Test output (can be large)
 tests/output/
+
+# Generated version file (setuptools_scm)
+src/farady/_version.py
 
 # Local agent instructions (not committed)
 AGENTS.md
