@@ -292,6 +292,14 @@ def run_test_and_collect_failures(
     Raises:
         AssertionError: If any failures found, with formatted error message
     """
+    failures_with_data = collect_failures_with_data(results, predicate)
+
+    if failures_with_data:
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_failures_to_disk(failures_with_data, test_name, timestamp)
+
     all_failures = {}
     for category in ["ordinary", "no_fare", "hawashi"]:
         failures = collect_failing_indices(results, category, predicate)
