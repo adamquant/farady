@@ -80,3 +80,6 @@ logs/
 
 # Test output (can be large)
 tests/output/
+
+# Local agent instructions (not committed)
+AGENTS.md

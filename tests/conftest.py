@@ -4,18 +4,124 @@ This module provides:
 - Test case loading from disk
 - Result computation and caching
 - Failure collection helpers
+- Pytest session logging
 """
 
 import sys
 import os
 import json
+import subprocess
 import numpy as np
 from pathlib import Path
 from datetime import datetime
 from typing import Callable
+import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from farady import calculate_from_dict
+
+
+def _get_git_commit() -> str:
+    """Get short git commit hash."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=Path(__file__).parent.parent,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except Exception:
+        pass
+    return "unknown"
+
+
+def _get_version() -> str:
+    """Get version string for logging."""
+    try:
+        from farady import __version__
+
+        commit = _get_git_commit()
+        return f"{__version__}+g{commit}"
+    except Exception:
+        return "0.0.0+unknown"
+
+
+_pytest_log_file = None
+_test_results = {"passed": [], "failed": [], "skipped": []}
+
+
+def pytest_sessionstart(session):
+    """Log session start with version and timestamp."""
+    global _pytest_log_file, _test_results
+
+    log_dir = Path(__file__).parent.parent / "logs"
+    log_dir.mkdir(exist_ok=True)
+
+    timestamp_file = datetime.now().strftime("%Y%m%d")
+    _pytest_log_file = log_dir / f"pytest_{timestamp_file}.log"
+
+    _test_results = {"passed": [], "failed": [], "skipped": []}
+
+    version = _get_version()
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    header = f"""
+{"=" * 80}
+PYTEST SESSION - {timestamp}
+VERSION: {version}
+{"=" * 80}
+"""
+
+    with open(_pytest_log_file, "a") as f:
+        f.write(header)
+
+
+def pytest_runtest_logreport(report):
+    """Log each test result."""
+    global _test_results
+
+    if _pytest_log_file is None:
+        return
+
+    if report.when == "call":
+        if report.passed:
+            _test_results["passed"].append(report.nodeid)
+            status = "PASSED"
+        elif report.failed:
+            _test_results["failed"].append(report.nodeid)
+            status = "FAILED"
+        elif report.skipped:
+            _test_results["skipped"].append(report.nodeid)
+            status = "SKIPPED"
+        else:
+            return
+
+        with open(_pytest_log_file, "a") as f:
+            f.write(f"{status}: {report.nodeid}\n")
+            if report.failed and hasattr(report, "longrepr"):
+                f.write(f"  Error: {report.longrepr}\n")
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Log session summary."""
+    if _pytest_log_file is None:
+        return
+
+    passed = len(_test_results["passed"])
+    failed = len(_test_results["failed"])
+    skipped = len(_test_results["skipped"])
+    total = passed + failed + skipped
+
+    summary = f"""
+{"=" * 80}
+SUMMARY: {passed} passed, {failed} failed, {skipped} skipped (total: {total})
+{"=" * 80}
+"""
+
+    with open(_pytest_log_file, "a") as f:
+        f.write(summary)
 
 
 def load_test_cases() -> dict[str, list]:

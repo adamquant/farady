@@ -17,6 +17,29 @@ Usage as CLI:
     farady --help
 """
 
+from importlib.metadata import version as get_pkg_version, PackageNotFoundError
+
+try:
+    from farady._version import __version__
+except ImportError:
+    __version__ = "0.0.0+unknown"
+
+
+def get_version() -> str:
+    """Get the current version string.
+
+    Returns version in format: X.Y.Z+gHASH or X.Y.Z.devN+gHASH
+
+    Examples:
+        0.1.0+g670ee68         # On or after a tag
+        0.1.1.dev5+g670ee68    # 5 commits after v0.1.0 tag
+    """
+    try:
+        return get_pkg_version("farady")
+    except PackageNotFoundError:
+        return __version__
+
+
 from farady.distribution import (
     InheritanceCase,
     InheritanceResult,
