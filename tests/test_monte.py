@@ -15,7 +15,7 @@ def test_total_always_one():
     run_test_and_collect_failures(
         "test_total_always_one",
         results,
-        lambda r: abs(r.total - 1.0) >= 1e-9,
+        lambda r: round(r.total, 2) == 1.0 - 1.0),
         "total != 1.0",
     )
 

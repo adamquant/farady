@@ -103,7 +103,9 @@ COUNT_HEIRS = HEIR_FIELDS - BOOLEAN_HEIRS
 
 @dataclass
 class InheritanceCase:
-    """Represents a family case for inheritance calculation.
+    """Represents a case for inheritance calculation.
+
+    All heirs are relative to the subject, who is either the deceased or to-be deceased.
 
     Attributes:
         ibn: Number of sons
@@ -113,7 +115,7 @@ class InheritanceCase:
         iiibn: Number of great-grandsons
         biibn: Number of great-granddaughters
         umm: Mother (0 or 1)
-        jadda: Grandmother(s) (0 or 1)
+        jadda: Grandmother(s) (0 or 1 - future versions will allow for more than 1)
         ab: Father (0 or 1)
         jadd: Grandfather (0 or 1)
         lium: Maternal half-siblings count
@@ -150,7 +152,7 @@ class InheritanceCase:
     zawja: bool = False
 
     def to_dict(self) -> CaseDict:
-        """Convert case to dictionary format for calculation."""
+        """returns a convert case to dictionary format for calculation."""
         result: CaseDict = {}
         for k, v in self.__dict__.items():
             if v and v != 0:
