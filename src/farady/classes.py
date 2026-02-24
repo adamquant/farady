@@ -16,7 +16,6 @@ class HeirData(TypedDict, total=False):
     yarith: bool | None
     fard: frac | None
     asib: bool | None
-    numerator: int | None
     pct: float | None
     shares: int | None
 
@@ -51,6 +50,8 @@ class Case:
     ending: str | None = None
     asib: str | None = None
     status: str | None = None
+    heads: int | None = None
+    _raas_override: int | None = None
 
     @property
     def _all_heirs(self) -> list[HeirData]:
@@ -245,8 +246,26 @@ class Case:
         return self.is_umuriya1 or self.is_umuriya2
 
     @property
+    def is_mushtaraka(self) -> bool:
+        if not self.lium.get("count"):
+            return False
+        return all(
+            [
+                self.zawj.get("count"),
+                (self.umm.get("count") or self.jadda.get("count")),
+                self.lium.get("count", 0) > 1,
+                self.shaqiq.get("count"),
+            ]
+        ) and not (self.has_any_furoo or self.has_m_usool)
+
+    @property
     def raas(self) -> int:
-        """Calculate total shares (denominator) from all fard values."""
+        """Calculate total shares (denominator) from all fard values.
+
+        If _raas_override is set (by inkisaar), returns that instead.
+        """
+        if self._raas_override is not None:
+            return self._raas_override
 
         def lcm(a: int, b: int) -> int:
             from math import gcd
@@ -274,11 +293,9 @@ class Case:
         )
 
     @property
-    def baqi(self) -> frac:
-        """Calculate remaining shares after allocation."""
-        allocated = self.total
-        remaining = self.raas - allocated
-        return frac(remaining, self.raas)
+    def baqi(self) -> int:
+        """Calculate remaining shares after allocation (raas - sum of shares)."""
+        return self.raas - self.total
 
     def to_dict(self) -> CaseDict:
         """Convert case to dictionary format."""
@@ -353,7 +370,7 @@ class Case:
 
 
 @dataclass
-class InheritanceResult: # depricated
+class InheritanceResult:  # depricated
     """Result of an inheritance calculation.
 
     Attributes:
@@ -378,6 +395,8 @@ class InheritanceResult: # depricated
         """Convert from Arabic codified names to pretty-printed dictionary with English and human-readable names."""
         return {PRETTY_NAMES.get(k, k): v for k, v in self.distribution.items()}
 
-    def get_member_fraction(self, member: str) -> float | None: # wrong change this to decimal @adam
+    def get_member_fraction(
+        self, member: str
+    ) -> float | None:  # wrong change this to decimal @adam
         """Get the fraction for a specific family member."""
         return self.distribution.get(member)

@@ -60,6 +60,7 @@ from farady.processing import (
 
 from farady.classes import Case
 from farady.calculation_functions import (
+    convert_fard_to_shares,
     zawjayn_step,
     kalala_step,
     usool_step,
@@ -86,44 +87,19 @@ def calculate(case: Case) -> Case:
     """
     log_calculation_start(_logger, {"case": case.to_dict()})
 
-    is_married = case.is_married
-    has_any_usool = case.has_any_usool
-    has_m_usool = case.has_m_usool
-    has_m_furoo = case.has_m_furoo
-    has_any_furoo = case.has_any_furoo
-    has_jame = case.has_jame
-    has_hawashi = case.has_hawashi
-    is_kalala = case.is_kalala
-    asib_present = case.asib_present
-
-    is_umuriya1 = case.is_umuriya1
-    is_umuriya2 = case.is_umuriya2
-    is_umuriya = is_umuriya1 or is_umuriya2
-
-    is_mushtaraka = False
-    if case.lium.get("count"):
-        is_mushtaraka = all(
-            [
-                case.zawj.get("count"),
-                (case.umm.get("count") or case.jadda.get("count")),
-                case.lium.get("count", 0) > 1,
-                case.shaqiq.get("count"),
-            ]
-        ) and not (has_any_furoo or has_m_usool)
-
-    if is_umuriya:
-        if is_umuriya1:
+    if case.is_umuriya:
+        if case.is_umuriya1:
             case.zawj["fard"] = frac("3/6")
             case.ab["fard"] = frac("2/6")
             case.umm["fard"] = frac("1/6")
             case.ending = "umuriya1"
-        elif is_umuriya2:
+        elif case.is_umuriya2:
             case.zawja["fard"] = frac("1/4")
             case.ab["fard"] = frac("1/2")
             case.umm["fard"] = frac("1/4")
             case.ending = "umuriya2"
 
-    elif is_mushtaraka:
+    elif case.is_mushtaraka:
         case.zawj["fard"] = frac("1/2")
         case.lium["fard"] = frac("1/3")
         if case.umm.get("count"):
@@ -133,45 +109,38 @@ def calculate(case: Case) -> Case:
         case.ending = "mushtaraka"
 
     else:
-        if is_married:
+        if case.is_married:
             case = zawjayn_step(case)
 
-        if has_any_usool:
+        if case.has_any_usool:
             case = usool_step(case)
 
-        if has_any_furoo:
+        if case.has_any_furoo:
             case = furoo_step(case)
 
-        if has_hawashi:
-            if not (has_m_usool or has_m_furoo):
+        if case.has_hawashi:
+            if not (case.has_m_usool or case.has_m_furoo):
                 case = hawashi_step(case)
 
-        if is_kalala:
+        if case.is_kalala:
             case = kalala_step(case)
 
-    total = frac(0)
-    for heir in case._all_heirs:
-        f = heir.get("fard")
-        if f:
-            total += f
+    case = convert_fard_to_shares(case)
 
-    raas = case.raas
-
-    if total > 1:
-        log_calculation_step(_logger, "awl", {"total": float(total), "raas": raas})
+    if case.baqi < 0:
+        log_calculation_step(_logger, "awl", {"baqi": case.baqi, "raas": case.raas})
         case = awl_step(case)
         case.ending = "awl"
-        raas = case.raas
 
-    if total < 1:
-        if asib_present or case.asib:
+    elif case.baqi > 0:
+        if case.asib_present or case.asib:
             log_calculation_step(
-                _logger, "taseeb", {"total": float(total), "asib": case.asib}
+                _logger, "taseeb", {"baqi": case.baqi, "asib": case.asib}
             )
             case = taseeb_step(case)
             case.ending = "taseeb"
-        elif total > 0:
-            log_calculation_step(_logger, "radd", {"total": float(total)})
+        elif case.total > 0:
+            log_calculation_step(_logger, "radd", {"baqi": case.baqi})
             case = radd_step(case)
             case.ending = "radd"
 
