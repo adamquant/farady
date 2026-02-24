@@ -1,3 +1,17 @@
+# Copyright (C) 2024  Adam Ahmed / SunnaAssets
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """Farady - Islamic Inheritance Distribution Calculator.
 
 This module provides functionality to calculate the distribution of assets
@@ -246,7 +260,7 @@ class InheritanceResult:
     """Result of an inheritance calculation.
 
     Attributes:
-        distribution: Dictionary of heir names to their fractional shares
+        distribution: Dictionary of heir names to their decimal shares
         ending: How the distribution ended (ta'seeb, awl, radd, umuriya, mushtaraka)
         asib: The 'aasib (residual heir) if present
         total: Total portion accounted for
@@ -264,10 +278,10 @@ class InheritanceResult:
     numerators: dict = field(default_factory=dict)
 
     def to_pretty_dict(self) -> dict[str, float]:
-        """Convert to pretty-printed dictionary with human-readable names."""
+        """Convert from Arabic codified names to pretty-printed dictionary with English and human-readable names."""
         return {PRETTY_NAMES.get(k, k): v for k, v in self.distribution.items()}
 
-    def get_member_fraction(self, member: str) -> float | None:
+    def get_member_fraction(self, member: str) -> float | None: # wrong change this to decimal @adam
         """Get the fraction for a specific family member."""
         return self.distribution.get(member)
 
@@ -338,8 +352,8 @@ class InheritanceCalculator:
 
         return finish
 
-    def _kalala(self, new: CaseDict, finish: FractionDict) -> FractionDict:
-        """Calculate kalala shares (when no descendants or parents exist).
+    def _kalala(self, new: CaseDict, finish: FractionDict) -> FractionDict: # rather than this @adam make this an attrb of the casedict, tht itis kalala or it si ha sno fare etc. ooh this is a great idea. i want to refactor the entire thing now to essential extract all condiitons form the book and store them for every singel case dict.  then the calcualtion will esssentially be rule abound more similar to human method
+        """Calculate kalala shares (when no descendants or male ascendants exist).
 
         Maternal half-siblings receive:
         - 1/6 if there is only one
@@ -372,11 +386,6 @@ class InheritanceCalculator:
     ) -> tuple[FractionDict, str | None]:
         """Calculate usool (roots) shares - parents and grandparents.
 
-        Father receives 1/6 if there are descendants, otherwise may get residual.
-        Grandfather receives 1/6 if there are descendants or father.
-        Mother receives 1/6 if there are descendants or siblings, 1/3 otherwise.
-        Grandmother receives 1/6.
-
         Args:
             new: Family member counts
             finish: Current distribution dictionary
@@ -392,16 +401,16 @@ class InheritanceCalculator:
             if new.get("ab"):
                 finish["ab"] = frac("1/6")
                 if not has_m_furoo:
-                    asib = "ab"
+                    asib = "ab". # @adam asib needs to become an attribute of the case dict! rather than a flaoting around var
             elif new.get("jadd"):
                 finish["jadd"] = frac("1/6")
-                if not has_m_furoo:
+                if not has_m_furoo: # again, flaoting around var, @adam make this a atrrrb of case dic
                     asib = "jadd"
 
             if new.get("umm"):
                 finish["umm"] = frac("1/6")
             elif new.get("jadda"):
-                finish["jadda"] = frac("1/6")
+                finish["jadda"] = frac("1/6") # notnreally any need for new and finish anymore, all i have to do is keep teh count in the case adn add to it
 
         elif not has_any_furoo and not has_jame:
             if new.get("umm"):
@@ -409,7 +418,7 @@ class InheritanceCalculator:
             elif new.get("jadda"):
                 finish["jadda"] = frac("1/6")
 
-        elif has_jame:
+        elif has_jame: # @adam has jame ikhwaa attr
             if new.get("umm"):
                 finish["umm"] = frac("1/6")
             elif new.get("jadda"):
@@ -428,21 +437,16 @@ class InheritanceCalculator:
     ) -> tuple:
         """Calculate furoo (descendants) shares - children and grandchildren.
 
-        This handles:
-        - Sons and daughters (direct descendants)
-        - Grandsons and granddaughters
-        - Great-grandsons and great-granddaughters
-
         Args:
             new: Family member counts
             finish: Current distribution dictionary
             asib: Current asib assignment
-            has_hawashi: Whether there are hawashi (other relatives)
+            has_hawashi: Whether there are hawashi
 
         Returns:
             Tuple of (updated finish, updated asib, bint_taking_half, bints_taking_twothirds)
         """
-        bint_taking_half = False
+        bint_taking_half = False # @adam class attr
         bints_taking_twothirds = False
 
         if new.get("ibn") and not new.get("bint"):
@@ -505,7 +509,7 @@ class InheritanceCalculator:
         bint_taking_half: bool,
         bints_taking_twothirds: bool,
         has_any_furoo: bool,
-        has_m_usool: bool,
+        has_m_usool: bool, # @adam all to become class attr
         has_m_furoo: bool,
         shaqiqa_taking_half: bool,
         shaqiqas_taking_twothirds: bool,
@@ -607,10 +611,10 @@ class InheritanceCalculator:
             Tuple of (updated finish, asib)
         """
         if raas is None:
-            raas = 6
+            raas = 6 # @adam waht is this?
         current_total = sum(finish.values()) if finish else frac(0)
         remaining_shares = raas - (
-            current_total.numerator * raas // current_total.denominator
+            current_total.numerator * raas // current_total.denominator # find cleaner way to do this after you move completely away form decimals
         )
         baqi = frac(remaining_shares, raas)
 
@@ -683,7 +687,7 @@ class InheritanceCalculator:
         elif new.get("amm"):
             finish["amm"] = finish.get("amm", frac(0)) + baqi
 
-        return finish, asib
+        return finish, asib # @adam no need to kee passing these vars around after attr
 
     def _calculate_denominator(self, finish: dict) -> Optional[int]:
         """Calculate the denominator (raas) for inheritance shares.
@@ -708,7 +712,7 @@ class InheritanceCalculator:
                     denominators.append(v.denominator)
             elif isinstance(v, float) and v > 0:
                 # For floats, try to find a reasonable denominator
-                # This handles residual shares from taseeb
+                # This handles residual shares from taseeb # @adam needs work
                 pass
 
         if not denominators:
@@ -906,7 +910,7 @@ class InheritanceCalculator:
 
         elif is_mushtaraka:
             finish["zawj"] = frac("1/2")
-            finish["all_full_siblings_maternal_half"] = frac("1/3")
+            finish["all_full_siblings_maternal_half"] = frac("1/3") #@adam bug, 
             if new.get("umm"):
                 finish["umm"] = frac("1/6")
             elif new.get("jadda"):
