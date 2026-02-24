@@ -61,8 +61,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-farady/
-
 # IDE
 .idea/
 .vscode/
