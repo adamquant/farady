@@ -18,11 +18,10 @@ A Python library and CLI tool for calculating Islamic inheritance distribution
 according to Faraid (Islamic inheritance law).
 
 Usage as library:
-    from farady import InheritanceCase, InheritanceCalculator
+    from farady import Case, calculate
 
-    case = InheritanceCase(ibn=2, bint=1, umm=1, zawja=True)
-    calculator = InheritanceCalculator()
-    result = calculator.calculate(case)
+    case = Case.from_dict({'ibn': 2, 'bint': 1, 'umm': 1, 'zawja': True})
+    result = calculate(case)
     print(result.distribution)
 
 Usage as CLI:
@@ -40,47 +39,35 @@ except ImportError:
 
 
 def get_version() -> str:
-    """Get the current version string.
-
-    Returns version in format: X.Y.Z+gHASH or X.Y.Z.devN+gHASH
-
-    Examples:
-        0.1.0+g670ee68         # On or after a tag
-        0.1.1.dev5+g670ee68    # 5 commits after v0.1.0 tag
-    """
+    """Get the current version string."""
     try:
         return get_pkg_version("farady")
     except PackageNotFoundError:
         return __version__
 
 
-from farady.distribution import (
-    InheritanceCase,
-    InheritanceResult,
-    InheritanceCalculator,
+from farady.classes import Case
+from farady.run_pipeline import (
+    calculate,
     calculate_inheritance,
     calculate_from_dict,
-    load_csv_cases,
-    process_csv_results,
+)
+from farady.processing import (
     PRETTY_NAMES,
     HEIR_FIELDS,
     COUNT_HEIRS,
     BOOLEAN_HEIRS,
+    load_csv_cases,
+    process_csv_results,
 )
-
 from farady.logging_config import (
     get_logger,
     get_log_dir,
 )
 
-from farady.tools_for_testing import build_random_case
-
-from farady import cli
-
 __all__ = [
-    "InheritanceCase",
-    "InheritanceResult",
-    "InheritanceCalculator",
+    "Case",
+    "calculate",
     "calculate_inheritance",
     "calculate_from_dict",
     "load_csv_cases",
@@ -89,8 +76,6 @@ __all__ = [
     "HEIR_FIELDS",
     "COUNT_HEIRS",
     "BOOLEAN_HEIRS",
-    "build_random_case",
-    "cli",
     "get_logger",
     "get_log_dir",
 ]

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+type HeirKey = str
+
 PRETTY_NAMES: dict[HeirKey, str] = {
     "bint": "Daughter(s)",
     "ibn": "Son(s)",
@@ -49,24 +53,11 @@ BOOLEAN_HEIRS = {"zawj", "zawja"}
 
 COUNT_HEIRS = HEIR_FIELDS - BOOLEAN_HEIRS
 
+
 def load_csv_cases(csv_path: str) -> list:
-    """Load inheritance cases from a CSV file.
-
-    Each row in the CSV should have column headers matching valid family
-    member names. Values can be integers, or strings like 'True', '1', 'yes'.
-
-    Args:
-        csv_path: Path to CSV file
-
-    Returns:
-        List of Case objects
-
-    Example CSV format:
-        ibn,bint,zawja,expected_wife_share
-        2,1,True,0.125
-        1,0,False,0
-    """
+    """Load inheritance cases from a CSV file."""
     import csv
+    from farady.classes import Case
 
     cases = []
     with open(csv_path, "r") as f:
@@ -79,27 +70,18 @@ def load_csv_cases(csv_path: str) -> list:
 
 
 def process_csv_results(csv_path: str) -> list:
-    """Load CSV and calculate results for each case.
-
-    Returns a list of dicts with both the input data and calculated results.
-
-    Args:
-        csv_path: Path to CSV file
-
-    Returns:
-        List of dicts with keys: 'case' (Case),
-        'result' (InheritanceResult), 'row_data' (original dict)
-    """
+    """Load CSV and calculate results for each case."""
     import csv
+    from farady.run_pipeline import calculate
 
     results = []
-    calculator = InheritanceCalculator()
-
     with open(csv_path, "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
+            from farady.classes import Case
+
             case = Case.from_dict(row)
-            result = calculator.calculate(case)
+            result = calculate(case)
             results.append({"case": case, "result": result, "row_data": row})
 
     return results

@@ -39,6 +39,10 @@ Family Member Parameters:
     --zawj: Husband
     --zawja: Wife
 """
+
+from __future__ import annotations
+from fractions import Fraction as frac
+
 from farady.logging_config import (
     get_logger,
     log_calculation_start,
@@ -47,281 +51,185 @@ from farady.logging_config import (
     log_calculation_step,
 )
 
-from farady.formatting import (
+from farady.processing import (
     PRETTY_NAMES,
     HEIR_FIELDS,
     BOOLEAN_HEIRS,
-    COUNT_HEIRS
+    COUNT_HEIRS,
+)
 
+from farady.classes import Case
+from farady.calculation_functions import (
+    zawjayn_step,
+    kalala_step,
+    usool_step,
+    furoo_step,
+    hawashi_step,
+    taseeb_step,
+    awl_step,
+    radd_step,
 )
 
 _logger = get_logger(__name__)
 
 
-from __future__ import annotations
-from functools import cached_property
-from fractions import Fraction as frac
-from dataclasses import dataclass, field
-from typing import Self, Any, TypedDict
+def calculate(case: Case) -> Case:
+    """Calculate inheritance distribution for a given family case.
 
-from __future__ import annotations
-from functools import cached_property
-from fractions import Fraction as frac
-from dataclasses import dataclass, field
-from typing import Self, Any, TypedDict
+    This is the main entry point for calculating inheritance distribution.
 
-type HeirKey = str
-type FractionDict = dict[HeirKey, frac]
-type DistributionDict = dict[HeirKey, float]
-type CaseDict = dict[HeirKey, int | bool]
+    Args:
+        case: A Case object containing all family member counts
 
-def calculate(self, case: Case) -> InheritanceResult:
-        """Calculate inheritance distribution for a given family case.
+    Returns:
+        The same Case object with all calculation results populated
+    """
+    log_calculation_start(_logger, {"case": case.to_dict()})
 
-        This is the main entry point for calculating inheritance distribution.
+    is_married = case.is_married
+    has_any_usool = case.has_any_usool
+    has_m_usool = case.has_m_usool
+    has_m_furoo = case.has_m_furoo
+    has_any_furoo = case.has_any_furoo
+    has_jame = case.has_jame
+    has_hawashi = case.has_hawashi
+    is_kalala = case.is_kalala
+    asib_present = case.asib_present
 
-        Args:
-            case: An Case object containing all family member counts
+    is_umuriya1 = case.is_umuriya1
+    is_umuriya2 = case.is_umuriya2
+    is_umuriya = is_umuriya1 or is_umuriya2
 
-        Returns:
-            An InheritanceResult object with the distribution and metadata
-        """
-        new = case.to_dict()
-
-        log_calculation_start(_logger, {"case": new})
-
-        ending = None
-        asib = None
-
-        finish = {k: v for k, v in new.items() if v != 0}
-        finish = {k: (v if isinstance(v, bool) else 0) for k, v in new.items()}
-
-        is_married = any([new.get("zawj"), new.get("zawja")])
-        has_any_usool = any(
-            [new.get("ab"), new.get("jadd"), new.get("umm"), new.get("jadda")]
-        )
-        has_m_usool = any([new.get("ab"), new.get("jadd")])
-        has_m_furoo = any([new.get("ibn"), new.get("iibn"), new.get("iiibn")])
-        has_any_furoo = any(
+    is_mushtaraka = False
+    if case.lium.get("count"):
+        is_mushtaraka = all(
             [
-                new.get("ibn"),
-                new.get("bint"),
-                new.get("iibn"),
-                new.get("bibn"),
-                new.get("iiibn"),
-                new.get("biibn"),
+                case.zawj.get("count"),
+                (case.umm.get("count") or case.jadda.get("count")),
+                case.lium.get("count", 0) > 1,
+                case.shaqiq.get("count"),
             ]
-        )
-        has_jame = (
-            sum(
-                value
-                for value in [
-                    new.get("shaqiq"),
-                    new.get("shaqiqa"),
-                    new.get("aliab"),
-                    new.get("uliab"),
-                    new.get("lium"),
-                ]
-                if value is not None
+        ) and not (has_any_furoo or has_m_usool)
+
+    if is_umuriya:
+        if is_umuriya1:
+            case.zawj["fard"] = frac("3/6")
+            case.ab["fard"] = frac("2/6")
+            case.umm["fard"] = frac("1/6")
+            case.ending = "umuriya1"
+        elif is_umuriya2:
+            case.zawja["fard"] = frac("1/4")
+            case.ab["fard"] = frac("1/2")
+            case.umm["fard"] = frac("1/4")
+            case.ending = "umuriya2"
+
+    elif is_mushtaraka:
+        case.zawj["fard"] = frac("1/2")
+        case.lium["fard"] = frac("1/3")
+        if case.umm.get("count"):
+            case.umm["fard"] = frac("1/6")
+        elif case.jadda.get("count"):
+            case.jadda["fard"] = frac("1/6")
+        case.ending = "mushtaraka"
+
+    else:
+        if is_married:
+            case = zawjayn_step(case)
+
+        if has_any_usool:
+            case = usool_step(case)
+
+        if has_any_furoo:
+            case = furoo_step(case)
+
+        if has_hawashi:
+            if not (has_m_usool or has_m_furoo):
+                case = hawashi_step(case)
+
+        if is_kalala:
+            case = kalala_step(case)
+
+    total = frac(0)
+    for heir in case._all_heirs:
+        f = heir.get("fard")
+        if f:
+            total += f
+
+    raas = case.raas
+
+    if total > 1:
+        log_calculation_step(_logger, "awl", {"total": float(total), "raas": raas})
+        case = awl_step(case)
+        case.ending = "awl"
+        raas = case.raas
+
+    if total < 1:
+        if asib_present or case.asib:
+            log_calculation_step(
+                _logger, "taseeb", {"total": float(total), "asib": case.asib}
             )
-            > 1
-        )
-        has_hawashi = any(
-            [
-                new.get("shaqiq"),
-                new.get("shaqiqa"),
-                new.get("aliab"),
-                new.get("uliab"),
-                new.get("lium"),
-                new.get("amm"),
-                new.get("ibnamm_sh"),
-                new.get("ibnamm_liab"),
-            ]
-        )
+            case = taseeb_step(case)
+            case.ending = "taseeb"
+        elif total > 0:
+            log_calculation_step(_logger, "radd", {"total": float(total)})
+            case = radd_step(case)
+            case.ending = "radd"
 
-        bint_taking_half = False
-        bints_taking_twothirds = False
-        shaqiqa_taking_half = False
-        shaqiqa_taking_twothirds = False
+    case.status = _determine_status(case)
 
-        is_kalala = not any([has_any_furoo, has_m_usool])
-        asib_present = any(
-            [
-                has_m_usool,
-                has_m_furoo,
-                new.get("shaqiq"),
-                new.get("aliab"),
-                new.get("amm"),
-                new.get("ibnamm_sh"),
-                new.get("ibnamm_liab"),
-            ]
-        )
+    log_calculation_end(
+        _logger,
+        {
+            "distribution": _build_distribution(case),
+            "ending": case.ending,
+            "asib": case.asib,
+            "total": case.total,
+            "status": case.status,
+            "denominator": case.raas,
+        },
+    )
 
-        is_umuriya1 = all(
-            [
-                new.get("ab"),
-                new.get("umm"),
-                new.get("zawj"),
-                not any([has_jame, has_any_furoo]),
-            ]
-        )
-        is_umuriya2 = all(
-            [
-                new.get("ab"),
-                new.get("umm"),
-                new.get("zawja"),
-                not any([has_jame, has_any_furoo]),
-            ]
-        )
-        is_umuriya = any([is_umuriya1, is_umuriya2])
+    return case
 
-        is_mushtaraka = False
-        if new.get("lium"):
-            is_mushtaraka = all(
-                [
-                    new.get("zawj"),
-                    (new.get("umm") or new.get("jadda")),
-                    new.get("lium") > 1,
-                    new.get("shaqiq"),
-                ]
-            ) and not any([has_any_furoo, has_m_usool])
 
-        if is_umuriya:
-            if is_umuriya1:
-                finish["zawj"] = frac("3/6")
-                finish["ab"] = frac("2/6")
-                finish["umm"] = frac("1/6")
-                finish = {k: v for k, v in finish.items() if v != 0}
-                ending = "umuriya1"
-            elif is_umuriya2:
-                finish["zawja"] = frac("1/4")
-                finish["ab"] = frac("1/2")
-                finish["umm"] = frac("1/4")
-                ending = "umuriya2"
+def _determine_status(case: Case) -> str:
+    """Determine the status of the calculation."""
+    final_total = case.total
 
-        elif is_mushtaraka:
-            finish["zawj"] = frac("1/2")
-            finish["all_full_siblings_maternal_half"] = frac("1/3") #@adam bug, 
-            if new.get("umm"):
-                finish["umm"] = frac("1/6")
-            elif new.get("jadda"):
-                finish["jadda"] = frac("1/6")
-            ending = "mushtaraka"
-
+    if case.raas > 0:
+        allocated = case.total
+        if allocated == 0 and case.ending is None:
+            return "Failed"
+        elif allocated == case.raas:
+            return "Complete"
         else:
-            if is_married:
-                finish = self._zawjayn(new, finish, has_any_furoo)
+            return "Unknown"
 
-            if has_any_usool:
-                finish, asib = self._usool(
-                    new, finish, asib, has_any_furoo, has_m_furoo, has_jame
-                )
-
-            if has_any_furoo:
-                finish, asib, bint_taking_half, bints_taking_twothirds = self._furoo(
-                    new, finish, asib, has_hawashi
-                )
-
-            if has_hawashi:
-                if not any([has_m_usool, has_m_furoo]):
-                    finish, asib, shaqiqa_taking_half, shaqiqas_taking_twothirds = (
-                        self._hawashi(
-                            new,
-                            finish,
-                            asib,
-                            bint_taking_half,
-                            bints_taking_twothirds,
-                            has_any_furoo,
-                            has_m_usool,
-                            has_m_furoo,
-                            shaqiqa_taking_half,
-                            shaqiqa_taking_twothirds,
-                        )
-                    )
-
-            if is_kalala:
-                finish = self._kalala(new, finish)
-
-        finish = {k: v for k, v in finish.items() if v != 0}
-
-        # Calculate initial raas from fard (predetermined) shares BEFORE taseeb/radd/awl
-        raas = self._calculate_denominator(finish)
-
-        total = sum(finish.values())
-
-        if total > 1:
-            log_calculation_step(_logger, "awl", {"total": float(total), "raas": raas})
-            finish = self._awl(total, finish, raas)
-            ending = "awl"
-
-        if total < 1:
-            if asib_present or asib:
-                log_calculation_step(
-                    _logger, "taseeb", {"total": float(total), "asib": asib}
-                )
-                finish, asib = self._taseeb(total, new, finish, asib, raas)
-                ending = "taseeb"
-            elif total > 0:
-                log_calculation_step(_logger, "radd", {"total": float(total)})
-                finish, ending = self._radd(total, finish, raas)
-
-        finish = {k: v for k, v in finish.items() if v != 0}
-
-        # Calculate final denominator after all adjustments
-        denominator = self._calculate_denominator(finish)
-
-        finish = {k: round(float(v), 4) for k, v in finish.items()}
-
-        post_ending_total = sum(finish.values())
-
-        if post_ending_total == 0 and ending is None:
-            status = "Failed"
-            ending = "No valid heirs."
-        elif round(post_ending_total, 2) == 1.00:
-            status = "Complete"
-        else:
-            status = "Unknown"
-
-        final_total = sum(finish.values())
-
-        # Calculate numerators for each heir
-        numerators = {}
-        if denominator:
-            for heir, fraction in finish.items():
-                if hasattr(fraction, "numerator"):
-                    # Convert fraction to numerator: (numerator / denominator) * denominator
-                    numerators[heir] = int(
-                        fraction.numerator * denominator / fraction.denominator
-                    )
-                elif isinstance(fraction, (int, float)) and fraction > 0:
-                    numerators[heir] = int(fraction * denominator)
-
-        return InheritanceResult(
-            distribution=finish,
-            ending=ending,
-            asib=asib,
-            total=final_total,
-            status=status,
-            denominator=denominator,
-            numerators=numerators,
-        )
-
-        log_calculation_end(
-            _logger,
-            {
-                "distribution": finish,
-                "ending": ending,
-                "asib": asib,
-                "total": final_total,
-                "status": status,
-                "denominator": denominator,
-            },
-        )
-
-        return result
+    if final_total == 0 and case.ending is None:
+        return "Failed"
+    elif round(final_total, 2) == 1.00:
+        return "Complete"
+    else:
+        return "Unknown"
 
 
-def calculate_inheritance(**family_members) -> InheritanceResult:
+def _build_distribution(case: Case) -> dict[str, float]:
+    """Build distribution dict from case."""
+    raas = case.raas if case.raas else 1
+    distribution = {}
+    for name, heir in zip(case._all_heir_names, case._all_heirs):
+        shares = heir.get("shares")
+        fard = heir.get("fard")
+
+        if shares is not None and shares > 0:
+            distribution[name] = float(shares) / raas
+        elif fard is not None and fard > 0:
+            distribution[name] = float(fard)
+
+    return {k: round(v, 4) for k, v in distribution.items() if v != 0}
+
+
+def calculate_inheritance(**family_members) -> Case:
     """Convenience function to calculate inheritance distribution.
 
     Args:
@@ -329,21 +237,19 @@ def calculate_inheritance(**family_members) -> InheritanceResult:
                         Example: ibn=2, bint=3, umm=1, zawja=True
 
     Returns:
-        InheritanceResult with distribution and metadata
+        Case object with calculation results
 
     Example:
         >>> result = calculate_inheritance(ibn=2, bint=1, umm=1, zawja=True)
-        >>> print(result.distribution)
     """
-    case = Case(**family_members)
-    calculator = InheritanceCalculator()
-    return calculator.calculate(case)
+    case = Case.from_dict(family_members)
+    return calculate(case)
 
 
-def calculate_from_dict(family_data: dict) -> InheritanceResult:
+def calculate_from_dict(family_data: dict) -> Case:
     """Calculate inheritance from a dictionary.
 
-    Convenience function that creates an Case from a dict
+    Convenience function that creates a Case from a dict
     and calculates the distribution. Useful for CSV data.
 
     Args:
@@ -354,7 +260,7 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                      with numpy-generated data.
 
     Returns:
-        InheritanceResult with distribution and metadata
+        Case object with calculation results
 
     Example:
         >>> data = {'ibn': 2, 'bint': 1, 'zawja': True}
@@ -393,24 +299,16 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
         "zawja",
     }
     boolean_fields = {"zawj", "zawja"}
-    count_fields = valid_fields - boolean_fields
 
     for key, value in family_data.items():
         if key not in valid_fields:
             log_validation_error(
-                _logger,
-                field=key,
-                value=value,
-                reason="Unknown field name",
+                _logger, field=key, value=value, reason="Unknown field name"
             )
-            return InheritanceResult(
-                distribution={},
-                ending="invalid_input",
-                asib=None,
-                total=0.0,
-                status="Failed",
-                denominator=None,
-            )
+            case = Case()
+            case.ending = "invalid_input"
+            case.status = "Failed"
+            return case
 
         if key in boolean_fields:
             if isinstance(value, bool):
@@ -431,14 +329,10 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                         value=value,
                         reason="Invalid boolean field value",
                     )
-                    return InheritanceResult(
-                        distribution={},
-                        ending="invalid_input",
-                        asib=None,
-                        total=0.0,
-                        status="Failed",
-                        denominator=None,
-                    )
+                    case = Case()
+                    case.ending = "invalid_input"
+                    case.status = "Failed"
+                    return case
             elif not isinstance(value, (int, float)):
                 log_validation_error(
                     _logger,
@@ -446,31 +340,20 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                     value=value,
                     reason="Invalid type for boolean field",
                 )
-                return InheritanceResult(
-                    distribution={},
-                    ending="invalid_input",
-                    asib=None,
-                    total=0.0,
-                    status="Failed",
-                    denominator=None,
-                )
+                case = Case()
+                case.ending = "invalid_input"
+                case.status = "Failed"
+                return case
         else:
             if isinstance(value, (int, float)):
                 if value < 0:
                     log_validation_error(
-                        _logger,
-                        field=key,
-                        value=value,
-                        reason="Negative count value",
+                        _logger, field=key, value=value, reason="Negative count value"
                     )
-                    return InheritanceResult(
-                        distribution={},
-                        ending="invalid_input",
-                        asib=None,
-                        total=0.0,
-                        status="Failed",
-                        denominator=None,
-                    )
+                    case = Case()
+                    case.ending = "invalid_input"
+                    case.status = "Failed"
+                    return case
             elif isinstance(value, str):
                 if value.strip().lower() in ("true", "yes"):
                     continue
@@ -485,14 +368,10 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                             value=value,
                             reason="Negative count value from string",
                         )
-                        return InheritanceResult(
-                            distribution={},
-                            ending="invalid_input",
-                            asib=None,
-                            total=0.0,
-                            status="Failed",
-                            denominator=None,
-                        )
+                        case = Case()
+                        case.ending = "invalid_input"
+                        case.status = "Failed"
+                        return case
                 except ValueError:
                     try:
                         int(float(value))
@@ -503,14 +382,10 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                             value=value,
                             reason="Could not convert string to int for count field",
                         )
-                        return InheritanceResult(
-                            distribution={},
-                            ending="invalid_input",
-                            asib=None,
-                            total=0.0,
-                            status="Failed",
-                            denominator=None,
-                        )
+                        case = Case()
+                        case.ending = "invalid_input"
+                        case.status = "Failed"
+                        return case
             elif not isinstance(value, bool):
                 log_validation_error(
                     _logger,
@@ -518,14 +393,10 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
                     value=value,
                     reason="Invalid type for count field",
                 )
-                return InheritanceResult(
-                    distribution={},
-                    ending="invalid_input",
-                    asib=None,
-                    total=0.0,
-                    status="Failed",
-                    denominator=None,
-                )
+                case = Case()
+                case.ending = "invalid_input"
+                case.status = "Failed"
+                return case
 
     zawj_val = family_data.get("zawj", False)
     zawja_val = family_data.get("zawja", False)
@@ -542,17 +413,10 @@ def calculate_from_dict(family_data: dict) -> InheritanceResult:
             value=f"zawj={zawj_val}, zawja={zawja_val}",
             reason="Both husband and wife present (invalid)",
         )
-        return InheritanceResult(
-            distribution={},
-            ending="invalid_input",
-            asib=None,
-            total=0.0,
-            status="Failed",
-            denominator=None,
-        )
+        case = Case()
+        case.ending = "invalid_input"
+        case.status = "Failed"
+        return case
 
     case = Case.from_dict(family_data)
-    calculator = InheritanceCalculator()
-    return calculator.calculate(case)
-
-
+    return calculate(case)
