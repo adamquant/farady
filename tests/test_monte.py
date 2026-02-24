@@ -29,7 +29,7 @@ def test_total_always_one():
     run_test_and_collect_failures(
         "test_total_always_one",
         results,
-        lambda r: round(r.total, 2) == 1.0 - 1.0) and r.status == 'Complete',
+        lambda r: round(r["total"], 2) != 1.0,
         "total != 1.0",
     )
 
@@ -40,6 +40,6 @@ def test_status_is_complete():
     run_test_and_collect_failures(
         "test_status_is_complete",
         results,
-        lambda r: r.status != "Complete",
+        lambda r: r["status"] != "Complete",
         "status != Complete",
     )

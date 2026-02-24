@@ -28,8 +28,8 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from farady import (
-    InheritanceCase,
-    InheritanceCalculator,
+    Case,
+    calculate,
     calculate_from_dict,
     load_csv_cases,
     process_csv_results,
@@ -42,31 +42,29 @@ class TestFromDict:
 
     def test_simple_counts(self):
         """Test integer conversion from strings."""
-        case = InheritanceCase.from_dict({"ibn": "2", "bint": "1"})
-        assert case.ibn == 2
-        assert case.bint == 1
+        case = Case.from_dict({"ibn": "2", "bint": "1"})
+        assert case.ibn.get("count") == 2
+        assert case.bint.get("count") == 1
 
     def test_boolean_spouses(self):
         """Test boolean conversion for spouse fields."""
-        case = InheritanceCase.from_dict({"zawja": "True", "zawj": "False"})
-        assert case.zawja == True
-        assert case.zawj == False
+        case = Case.from_dict({"zawja": "True", "zawj": "False"})
+        assert case.zawja.get("count") == 1
+        assert case.zawj.get("count") == 0
 
     def test_boolean_spouses_numeric(self):
         """Test numeric string conversion for spouse fields."""
-        case = InheritanceCase.from_dict({"zawja": "1", "zawj": "0"})
-        assert case.zawja == True
-        assert case.zawj == False
+        case = Case.from_dict({"zawja": "1", "zawj": "0"})
+        assert case.zawja.get("count") == 1
+        assert case.zawj.get("count") == 0
 
     def test_mixed_types(self):
         """Test mixed int and bool fields."""
-        case = InheritanceCase.from_dict(
-            {"ibn": "1", "bint": 2, "zawja": True, "umm": "1"}
-        )
-        assert case.ibn == 1
-        assert case.bint == 2
-        assert case.zawja == True
-        assert case.umm == 1
+        case = Case.from_dict({"ibn": "1", "bint": 2, "zawja": True, "umm": "1"})
+        assert case.ibn.get("count") == 1
+        assert case.bint.get("count") == 2
+        assert case.zawja.get("count") == 1
+        assert case.umm.get("count") == 1
 
 
 class TestCalculateFromDict:
@@ -121,7 +119,7 @@ class TestCSVLoading:
 
         # Check that cases are valid
         for case in cases:
-            assert isinstance(case, InheritanceCase)
+            assert isinstance(case, Case)
 
     def test_process_csv_results(self):
         """Test processing CSV and calculating results."""
@@ -137,7 +135,7 @@ class TestCSVLoading:
             assert "case" in item
             assert "result" in item
             assert "row_data" in item
-            assert isinstance(item["case"], InheritanceCase)
+            assert isinstance(item["case"], Case)
 
 
 class TestCSVValidation:

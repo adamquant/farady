@@ -58,20 +58,18 @@ class TestInputContract:
         assert field in FARADY_FIELDS, f"Field {field} not in farady.HEIR_FIELDS"
 
     def test_inheritance_case_accepts_all_fields(self) -> None:
-        """InheritanceCase should accept all heir fields."""
-        from farady import InheritanceCase
-
-        case = InheritanceCase(
-            ibn=1,
-            bint=2,
-            iibn=0,
-            bibn=0,
-            umm=1,
-            ab=1,
-            zawja=True,
+        """Case should accept all heir fields."""
+        case = Case(
+            ibn={"count": 1},
+            bint={"count": 2},
+            iibn={"count": 0},
+            bibn={"count": 0},
+            umm={"count": 1},
+            ab={"count": 1},
+            zawja={"count": 1},
         )
-        assert case.ibn == 1
-        assert case.zawja is True
+        assert case.ibn.get("count") == 1
+        assert case.zawja.get("count") == 1
 
     def test_string_values_converted(self) -> None:
         """String values in input should be converted properly."""
