@@ -430,6 +430,12 @@ def radd_step(case: Case) -> Case:
             radd_shares_total += shares
 
     if not radd_heirs or radd_shares_total == 0:
+        if not case.asib:
+            for name in ("zawj", "zawja"):
+                heir = getattr(case, name)
+                if heir.get("shares", 0) > 0:
+                    heir["shares"] = heir.get("shares", 0) + baqi
+                    break
         return case
 
     if baqi % radd_shares_total != 0:

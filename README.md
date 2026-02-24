@@ -688,6 +688,34 @@ python scripts/version.py tag               # Create SA release tag
 
 ---
 
+## Schools of Thought (Madhahib)
+
+### Current Implementation (v0.1.0)
+
+This version implements a simplified approach to Islamic inheritance that does not yet support toggling between the four madhahib (schools of thought). The following rules are currently hardcoded:
+
+1. **Siblings blocked by father/grandfather**: All siblings (full, paternal half, and maternal half) are completely blocked from inheritance when a father or grandfather is present. This follows the majority opinion.
+
+2. **Radd to spouse when alone**: If no blood relatives are present to receive the excess (radd), the remainder is allocated to the surviving spouse. This is a contemporary practice adopted by some scholars and is not universally accepted across all madhahib.
+
+### Planned: Madhahib Toggle (v0.2.0)
+
+A future release will introduce configuration options to toggle between different schools of thought, including:
+
+- Hanafi
+- Maliki  
+- Shafi'i
+- Hanbali
+
+This will affect rulings on:
+- Grandfather vs siblings competition
+- Radd distribution rules
+- Special cases (mushtaraka, umuriya)
+
+See issue [#20](https://github.com/adamquant/farady-dev/issues/20) for progress on this feature.
+
+---
+
 ## License
 
 **GNU Affero General Public License v3.0 (AGPLv3)**
