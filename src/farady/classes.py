@@ -179,8 +179,7 @@ class Case:
         )
 
     @property
-    def has_asib(self) -> bool:
-        """Check if any heir is designated as asib (residual heir)."""
+    def is_asib(self) -> bool:
         return any(heir.get("asib", False) for heir in self._all_heirs)
 
     @property
@@ -351,3 +350,34 @@ class Case:
             kwargs[key] = {"count": count}
 
         return cls(**kwargs)
+
+
+@dataclass
+class InheritanceResult: # depricated
+    """Result of an inheritance calculation.
+
+    Attributes:
+        distribution: Dictionary of heir names to their decimal shares
+        ending: How the distribution ended (ta'seeb, awl, radd, umuriya, mushtaraka)
+        asib: The 'aasib (residual heir) if present
+        total: Total portion accounted for
+        status: Calculation status (Complete, Failed, Unknown)
+        denominator: The total number of shares (raas) for this inheritance case
+        numerators: Dict of heir names to their share numerator (heir -> numerator)
+    """
+
+    distribution: DistributionDict = field(default_factory=dict)
+    ending: str | None = None
+    asib: str | None = None
+    total: float = 0.0
+    status: str = "Unknown"
+    denominator: int | None = None
+    numerators: dict = field(default_factory=dict)
+
+    def to_pretty_dict(self) -> dict[str, float]:
+        """Convert from Arabic codified names to pretty-printed dictionary with English and human-readable names."""
+        return {PRETTY_NAMES.get(k, k): v for k, v in self.distribution.items()}
+
+    def get_member_fraction(self, member: str) -> float | None: # wrong change this to decimal @adam
+        """Get the fraction for a specific family member."""
+        return self.distribution.get(member)
