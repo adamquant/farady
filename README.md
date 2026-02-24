@@ -699,7 +699,7 @@ This software is licensed under AGPLv3. See the [LICENSE](LICENSE) file for the 
 - **Commercial Use Allowed**: You may use this software for commercial purposes
 - **Source Required**: If you modify this software and run it as a network service, you must make your modifications available to users
 - **Share Alike**: If you distribute modified versions, they must be licensed under AGPLv3
-- **Attribution**: You must give appropriate credit to Adam Ahmed / SunnaAssets
+- **Attribution**: You must give appropriate credit to Adam Ahmed
 
 ### Enterprise & Commercial Use
 
