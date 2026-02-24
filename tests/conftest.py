@@ -206,7 +206,7 @@ def _sample_cases(cases: list, limit: int) -> list:
 def compute_all_results() -> dict[str, list]:
     """Run calculations on test cases, cache results as (case, result) tuples."""
     cases = load_test_cases()
-    limit = int(os.environ.get("FARADY_MONTE_LIMIT", "1"))
+    limit = int(os.environ.get("FARADY_MONTE_LIMIT", "100000"))
     results = {}
     for category in ["ordinary", "no_fare", "hawashi"]:
         sampled = _sample_cases(cases[category], limit)
