@@ -179,7 +179,8 @@ class Case:
         )
 
     @property
-    def asib(self) -> bool:
+    def has_asib(self) -> bool:
+        """Check if any heir is designated as asib (residual heir)."""
         return any(heir.get("asib", False) for heir in self._all_heirs)
 
     @property
