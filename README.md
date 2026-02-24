@@ -1,6 +1,6 @@
 # Farady - Islamic Inheritance Distribution Calculator
 
-[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](LICENSE)
+[![License: AGPLv3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/pypi/pyversions/farady)](https://pypi.org/project/farady/)
 [![CI](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
 [![Release Tests](https://github.com/adamquant/farady-dev/actions/workflows/release-sa-tests.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/release-sa-tests.yml)
@@ -690,32 +690,25 @@ python scripts/version.py tag               # Create SA release tag
 
 ## License
 
-**Creative Commons Attribution Non-Commercial Share Alike 4.0 (CC BY-NC-SA 4.0)**
+**GNU Affero General Public License v3.0 (AGPLv3)**
 
-This software is NOT licensed under MIT or other permissive licenses.
+This software is licensed under AGPLv3. See the [LICENSE](LICENSE) file for the full text.
 
-### Why this license?
+### Key Points of AGPLv3
 
-- **Non-Commercial**: You may not use this software for commercial purposes without written permission
-- **Share Alike**: If you modify or build upon this material, you must distribute your contributions under the same license
-- **Attribution**: You must give appropriate credit to Adam Ahmed (https://github.com/adamquant)
+- **Commercial Use Allowed**: You may use this software for commercial purposes
+- **Source Required**: If you modify this software and run it as a network service, you must make your modifications available to users
+- **Share Alike**: If you distribute modified versions, they must be licensed under AGPLv3
+- **Attribution**: You must give appropriate credit to Adam Ahmed / SunnaAssets
 
 ### Enterprise & Commercial Use
 
-This license is intentionally restrictive because:
-1. Islamic inheritance law is a specialized domain requiring expert knowledge
-2. Its sources are inherently 'free' and 'open' to all (Qur'an, Sunna, etc.) and therefore any commercial applications must demonstrate significant added value in layers/wrappers.
-3. Incorrect calculations can have serious legal and financial consequences
-4. We need to maintain quality control over implementations including scholarly review
-5. Commercial use requires explicit permission or licensing from the author
+AGPLv3 is a strong copyleft license. If you:
+- Use it as-is: No restrictions
+- Host it as a service: You must provide source code to users
+- Modify it: Must distribute your modifications under AGPLv3
 
-For commercial licensing inquiries, please contact teh author.
-
-### Permissions
-
-You are free to:
-- Share: Copy and redistribute the material in any medium or format
-- Adapt: Remix, transform, and build upon the material
+For traditional commercial licensing (to avoid copyleft obligations), please contact the author.
 
 Under the following terms:
 - Attribution: You must give appropriate credit, provide a link to the license, and indicate if changes were made
