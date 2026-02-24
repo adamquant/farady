@@ -1,0 +1,50 @@
+PRETTY_NAMES: dict[HeirKey, str] = {
+    "bint": "Daughter(s)",
+    "ibn": "Son(s)",
+    "bibn": "Granddaughter(s)",
+    "iibn": "Grandson(s)",
+    "biibn": "Great-granddaughter(s)",
+    "iiibn": "Great-grandson(s)",
+    "umm": "Mother",
+    "jadda": "Grandmother(s)",
+    "ab": "Father",
+    "jadd": "Grandfather (nearest in relation)",
+    "lium": "Maternal Half-sibling(s)",
+    "shaqiqa": "Full Sister(s)",
+    "shaqiq": "Full Brother(s)",
+    "uliab": "Paternal Half-sister(s)",
+    "aliab": "Paternal Half-brother(s)",
+    "ibnamm_sh": "Full Nephew",
+    "ibnamm_liab": "Half Nephew",
+    "amm": "Uncle",
+    "zawj": "Husband",
+    "zawja": "Wife",
+    "all_full_siblings_maternal_half": "All full siblings and maternal half siblings",
+}
+
+HEIR_FIELDS = {
+    "ibn",
+    "bint",
+    "iibn",
+    "bibn",
+    "iiibn",
+    "biibn",
+    "umm",
+    "jadda",
+    "ab",
+    "jadd",
+    "lium",
+    "shaqiqa",
+    "shaqiq",
+    "uliab",
+    "aliab",
+    "ibnamm_sh",
+    "ibnamm_liab",
+    "amm",
+    "zawj",
+    "zawja",
+}
+
+BOOLEAN_HEIRS = {"zawj", "zawja"}
+
+COUNT_HEIRS = HEIR_FIELDS - BOOLEAN_HEIRS
