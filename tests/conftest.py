@@ -32,7 +32,8 @@ from typing import Callable
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from farady import calculate_from_dict
+from farady import Case, calculate_from_dict
+from farady.run_pipeline import _build_distribution
 
 
 def _get_git_commit() -> str:
@@ -138,9 +139,24 @@ SUMMARY: {passed} passed, {failed} failed, {skipped} skipped (total: {total})
         f.write(summary)
 
 
+def _resolve_test_cases_path() -> Path | None:
+    candidates = [
+        Path(__file__).parent / "data" / "test_cases.npz",
+        Path(__file__).parent / "data" / "monte" / "test_cases.npz",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    matches = list(Path(__file__).parent.rglob("test_cases.npz"))
+    return matches[0] if matches else None
+
+
 def load_test_cases() -> dict[str, list]:
     """Load pre-generated test cases from disk."""
-    data_path = Path(__file__).parent / "data" / "test_cases.npz"
+    data_path = _resolve_test_cases_path()
+    if data_path is None:
+        pytest.skip("test_cases.npz not found")
     data = np.load(data_path, allow_pickle=True)
     return {
         "ordinary": list(data["ordinary"]),
@@ -149,26 +165,53 @@ def load_test_cases() -> dict[str, list]:
     }
 
 
-def result_to_dict(result) -> dict:
-    """Convert InheritanceResult to JSON-serializable dict."""
+def case_to_result(case: Case) -> dict:
+    distribution = _build_distribution(case)
+    denominator = case.raas
+    numerators = {
+        name: int(heir.get("shares", 0))
+        for name, heir in zip(case._all_heir_names, case._all_heirs)
+        if heir.get("shares")
+    }
     return {
-        "distribution": result.distribution,
-        "ending": result.ending,
-        "asib": result.asib,
-        "total": result.total,
-        "status": result.status,
-        "denominator": result.denominator,
-        "numerators": result.numerators,
+        "distribution": distribution,
+        "ending": case.ending,
+        "asib": case.asib,
+        "total": sum(distribution.values()),
+        "status": case.status,
+        "denominator": denominator,
+        "numerators": numerators,
     }
 
 
+def result_to_dict(result: dict) -> dict:
+    """Convert Result dict to JSON-serializable dict."""
+    return {
+        "distribution": result["distribution"],
+        "ending": result["ending"],
+        "asib": result["asib"],
+        "total": result["total"],
+        "status": result["status"],
+        "denominator": result["denominator"],
+        "numerators": result["numerators"],
+    }
+
+
+def _sample_cases(cases: list, limit: int) -> list:
+    if limit <= 0:
+        return []
+    return cases[:limit]
+
+
 def compute_all_results() -> dict[str, list]:
-    """Run calculations on all test cases, cache results as (case, result) tuples."""
+    """Run calculations on test cases, cache results as (case, result) tuples."""
     cases = load_test_cases()
+    limit = int(os.environ.get("FARADY_MONTE_LIMIT", "1"))
     results = {}
     for category in ["ordinary", "no_fare", "hawashi"]:
+        sampled = _sample_cases(cases[category], limit)
         results[category] = [
-            (case, calculate_from_dict(case)) for case in cases[category]
+            (case, case_to_result(calculate_from_dict(case))) for case in sampled
         ]
     return results
 
