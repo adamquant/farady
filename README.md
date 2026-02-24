@@ -709,8 +709,3 @@ AGPLv3 is a strong copyleft license. If you:
 - Modify it: Must distribute your modifications under AGPLv3
 
 For traditional commercial licensing (to avoid copyleft obligations), please contact the author.
-
-Under the following terms:
-- Attribution: You must give appropriate credit, provide a link to the license, and indicate if changes were made
-- NonCommercial: You may not use the material for commercial purposes
-- ShareAlike: If you remix, transform, or build upon the material, you must distribute your contributions under the same license
