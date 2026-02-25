@@ -80,6 +80,7 @@ logs/
 
 # Test output (can be large)
 tests/output/
+!tests/output/review.ipynb
 
 # Generated version file (setuptools_scm)
 src/farady/_version.py
