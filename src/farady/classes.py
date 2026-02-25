@@ -302,7 +302,7 @@ class Case:
     @property
     def baqi(self) -> int:
         """Calculate remaining shares after allocation (raas - sum of shares)."""
-        return self.raas - self.total
+        return self.raas - self.total_shares
 
     def to_dict(self) -> CaseDict:
         """Convert case to dictionary format."""
