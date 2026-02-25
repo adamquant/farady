@@ -50,9 +50,10 @@ from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "tests"))
 from conftest import (
-    compute_all_results,
-    run_all_tests_and_collect_failure_data,
-    save_failures_to_disk,
+    get_results,
+    MONTE_TESTS,
+    run_test,
+    save_failures,
 )
 
 
@@ -61,13 +62,24 @@ def main():
     print(f"Timestamp: {timestamp}")
     print()
 
-    print("Computing all results...")
-    results = compute_all_results()
+    print("Loading cached results...")
+    results = get_results()
     total_cases = sum(len(v) for v in results.values())
     print(f"  Total cases: {total_cases:,}")
 
     print("\nRunning tests and collecting failures...")
-    all_failures = run_all_tests_and_collect_failure_data(results)
+    all_failures = {}
+
+    for test_name, predicate in MONTE_TESTS:
+        try:
+            failures = run_test(test_name, results, predicate, "")
+            if any(failures.values()):
+                all_failures[test_name] = failures
+                total = sum(len(v) for v in failures.values())
+                print(f"  {test_name}: {total} failures")
+        except AssertionError:
+            # Test failed, failures already saved
+            pass
 
     if not all_failures:
         print("\nAll tests passed! No failures to save.")
@@ -80,7 +92,7 @@ def main():
         for cat, items in failures.items():
             print(f"    {cat}: {len(items)} failures")
 
-        path = save_failures_to_disk(failures, test_name, timestamp)
+        path = save_failures(failures, test_name, timestamp)
         if path:
             print(f"    Saved to: {path}")
 
