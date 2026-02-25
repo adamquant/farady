@@ -18,6 +18,9 @@
 Run this script to generate failure reports:
     poetry run python scripts/generate_monte_results.py
 
+To customize the number of test cases (default is 1000 for faster iteration):
+    FARADY_MONTE_LIMIT=5000 poetry run python scripts/generate_monte_results.py
+
 Output (only if failures exist):
     tests/output/failures_{test_name}_{timestamp}.json
 
