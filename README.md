@@ -533,6 +533,45 @@ Run specific test:
 pytest tests/test_farady.py::TestCalculateFromDict::test_son_daughter_wife -v
 ```
 
+### Monte Carlo Testing
+
+Monte Carlo tests verify inheritance calculations across thousands of randomly generated cases. The improved testing infrastructure includes:
+
+#### Quick Start
+
+1. Run the Monte Carlo tests:
+   ```bash
+   poetry run python scripts/generate_monte_results.py
+   ```
+
+2. Customize the number of test cases (default is 1000 for faster iteration):
+   ```bash
+   FARADY_MONTE_LIMIT=5000 poetry run python scripts/generate_monte_results.py
+   ```
+
+3. Analyze failures in Jupyter:
+   ```bash
+   jupyter notebook tests/output/review.ipynb
+   ```
+
+#### Configuration
+
+The number of test cases can be configured using the `FARADY_MONTE_LIMIT` environment variable:
+- Default: 1000 cases (faster iteration)
+- To run more cases: `FARADY_MONTE_LIMIT=10000`
+- To run fewer cases: `FARADY_MONTE_LIMIT=100`
+
+#### Analysis Tools
+
+The `tests/output/review.ipynb` notebook provides powerful querying capabilities:
+- Filter failures by heir, status, ending, or total distribution range
+- Inspect specific cases in detail
+- Find similar cases with pattern matching
+- Get random samples for quick inspection
+- View summaries of all failures
+
+See `tests/output/README.md` for complete documentation.
+
 ---
 
 ## Branching Model
