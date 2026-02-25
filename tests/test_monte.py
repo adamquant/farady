@@ -18,17 +18,14 @@ These tests verify that all calculations produce valid results
 across a large number of randomly generated test cases.
 """
 
-import pytest
-
-from conftest import get_results, run_test_and_collect_failures
+from conftest import CATEGORIES, MONTE_TESTS, get_results, run_test
 
 
 def test_total_always_one():
     """All inheritance distributions should sum to 1.0."""
-    results = get_results()
-    run_test_and_collect_failures(
+    run_test(
         "test_total_always_one",
-        results,
+        get_results(),
         lambda r: round(r["total"], 2) != 1.0,
         "total != 1.0",
     )
@@ -36,10 +33,9 @@ def test_total_always_one():
 
 def test_status_is_complete():
     """All calculations should complete successfully."""
-    results = get_results()
-    run_test_and_collect_failures(
+    run_test(
         "test_status_is_complete",
-        results,
+        get_results(),
         lambda r: r["status"] != "Complete",
         "status != Complete",
     )
