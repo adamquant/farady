@@ -47,10 +47,11 @@ def get_version() -> str:
 
 
 from farady.classes import Case
-from farady.run_pipeline import (
+from farady.pipelines import (
     calculate,
     calculate_inheritance,
     calculate_from_dict,
+    _build_distribution,
 )
 from farady.processing import (
     PRETTY_NAMES,
@@ -70,6 +71,7 @@ __all__ = [
     "calculate",
     "calculate_inheritance",
     "calculate_from_dict",
+    "_build_distribution",
     "load_csv_cases",
     "process_csv_results",
     "PRETTY_NAMES",

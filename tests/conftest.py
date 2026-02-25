@@ -34,8 +34,7 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
-from farady import calculate_from_dict
-from farady.run_pipeline import _build_distribution
+from farady import calculate_from_dict, _build_distribution
 
 CATEGORIES = ("ordinary", "no_fare", "hawashi")
 
@@ -47,7 +46,7 @@ MONTE_TESTS = [
 
 def _get_version() -> str:
     try:
-        from farady import __version__
+        from farady._version import __version__
 
         try:
             result = subprocess.run(
