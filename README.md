@@ -551,26 +551,91 @@ Monte Carlo tests verify inheritance calculations across thousands of randomly g
 
 3. Analyze failures in Jupyter:
    ```bash
-   jupyter notebook tests/output/review.ipynb
+   jupyter notebook tests/review.ipynb
    ```
 
 #### Configuration
 
 The number of test cases can be configured using the `FARADY_MONTE_LIMIT` environment variable:
-- Default: 1000 cases (faster iteration)
-- To run more cases: `FARADY_MONTE_LIMIT=10000`
-- To run fewer cases: `FARADY_MONTE_LIMIT=100`
+- Default: 1000 cases (faster iteration during development)
+- To run more comprehensive tests: `FARADY_MONTE_LIMIT=10000`
+- To run fewer cases for quick testing: `FARADY_MONTE_LIMIT=100`
+
+For debugging specific issues, you might want to run with a smaller limit to get faster feedback:
+```bash
+FARADY_MONTE_LIMIT=100 poetry run python scripts/generate_monte_results.py
+```
+
+For production validation, you might want to run with a larger limit:
+```bash
+FARADY_MONTE_LIMIT=50000 poetry run python scripts/generate_monte_results.py
+```
 
 #### Analysis Tools
 
-The `tests/output/review.ipynb` notebook provides powerful querying capabilities:
-- Filter failures by heir, status, ending, or total distribution range
-- Inspect specific cases in detail
-- Find similar cases with pattern matching
-- Get random samples for quick inspection
-- View summaries of all failures
+The `tests/review.ipynb` notebook provides powerful querying and debugging capabilities:
 
-See `tests/output/README.md` for complete documentation.
+##### Loading and Setup
+When you open the notebook, the first cell automatically loads all failure reports and creates DataFrames for analysis. It will show you:
+- Which failure reports were loaded
+- How many failures exist for each test
+- Available DataFrames for querying (`master_df` for all tests, plus individual test DataFrames)
+
+##### Querying Failures
+The notebook provides several helper functions for filtering and analyzing failures:
+
+- `get_failure_summary(df)`: Get a summary of failures by test and category
+- `filter_by_heir(df, heir_name)`: Filter failures that involve a specific heir
+- `filter_by_status(df, status)`: Filter failures by calculation status
+- `filter_by_ending(df, ending)`: Filter failures by calculation ending
+- `filter_by_total_range(df, min_total, max_total)`: Filter by total distribution range
+- `find_similar_cases(df, case_pattern)`: Find cases matching a pattern dictionary
+- `sample_failures(df, n)`: Get a random sample of failures for quick inspection
+
+##### Detailed Inspection
+Use `inspect_case(df, index)` to examine a specific failure case in detail:
+- View the complete input case parameters
+- See the calculation result including distribution, total, status, and denominators
+- Examine individual heir shares and numerators
+
+##### Debugging Workflow
+1. Run the Monte Carlo tests with an appropriate limit:
+   ```bash
+   FARADY_MONTE_LIMIT=1000 poetry run python scripts/generate_monte_results.py
+   ```
+
+2. Open the analysis notebook:
+   ```bash
+   jupyter notebook tests/review.ipynb
+   ```
+
+3. Run the first cell to load all failure data
+
+4. Use the helper functions to narrow down to specific types of failures:
+   ```python
+   # Find all failures involving spouses
+   spouse_failures = filter_by_heir(master_df, 'zawj')
+   get_failure_summary(spouse_failures)
+   
+   # Look at incomplete calculations
+   incomplete = filter_by_status(master_df, 'Incomplete')
+   sample_incomplete = sample_failures(incomplete, 3)
+   for i in range(len(sample_incomplete)):
+       inspect_case(sample_incomplete, i)
+       print("-" * 50)
+   ```
+
+5. For detailed analysis of a specific case, use `inspect_case()` with the index of interest
+
+#### Manual Inspection and Pattern Recognition
+
+The notebook makes it easy to identify patterns in failures:
+- Use `find_similar_cases()` to locate cases with similar input parameters
+- Filter by specific heirs, statuses, or calculation endings
+- Sample random failures to get a broad view of issues
+- Compare distributions and totals to identify calculation anomalies
+
+This makes it much easier to debug edge cases and improve the calculation engine.
 
 ---
 
