@@ -173,11 +173,14 @@ def case_to_result(case: Case) -> dict:
         for name, heir in zip(case._all_heir_names, case._all_heirs)
         if heir.get("shares")
     }
+    total = (
+        sum(item["fraction"] for item in distribution.values()) if distribution else 0
+    )
     return {
         "distribution": distribution,
         "ending": case.ending,
         "asib": case.asib,
-        "total": sum(distribution.values()),
+        "total": total,
         "status": case.status,
         "denominator": denominator,
         "numerators": numerators,
