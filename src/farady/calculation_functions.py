@@ -412,7 +412,7 @@ def radd_step(case: Case) -> Case:
     """Apply radd (return) when shares are less than 1.
 
     When the total of fard shares is less than 1, the remaining (baqi)
-    goes back to fard holders proportionally, INCLUDING spouses in this build - future fucntionality will allow for a choice of classic vs conemporary spousal treatment w/r radd (AA)
+    goes back to fard holders proportionally, INCLUDING spouses in this build - future functionality will allow for a choice of classic vs contemporary spousal treatment w/r radd (AA)
     """
     baqi = case.baqi
     if baqi <= 0:
@@ -456,21 +456,23 @@ def radd_step(case: Case) -> Case:
     # Use fractional arithmetic for precise radd calculation
     total_shares = sum(shares for _, _, shares in radd_heirs)
 
-    # Use fractional arithmetic for precise radd calculation
-    total_shares = sum(shares for _, _, shares in radd_heirs)
-
-    for name, heir, shares in radd_heirs:
+    # Calculate and distribute radd portions
+    total_radd_distributed = 0
+    for i, (name, heir, shares) in enumerate(radd_heirs):
         # Calculate exact fractional radd portion
         radd_fraction = frac(baqi) * frac(shares, total_shares)
-        radd_portion = radd_fraction.numerator // radd_fraction.denominator
+        radd_portion = int(radd_fraction)  # Integer division to get whole shares
 
-        # If there's a remainder, distribute it proportionally
-        remainder = radd_fraction.numerator % radd_fraction.denominator
-        if remainder:
-            # Distribute remainder proportionally to avoid truncation
-            if radd_heirs.index((name, heir, shares)) == 0:
-                radd_portion += 1
+        # Handle remainder - distribute it to the first heir to avoid fractional shares
+        if i == 0:
+            remainder = baqi - sum(
+                int(frac(baqi) * frac(h_shares, total_shares))
+                for _, _, h_shares in radd_heirs
+            )
+            radd_portion += remainder
 
-        heir["shares"] = heir.get("shares", 0) + radd_portion
+        current_shares = heir.get("shares", 0)
+        heir["shares"] = current_shares + radd_portion
+        total_radd_distributed += radd_portion
 
     return case
