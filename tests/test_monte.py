@@ -66,6 +66,7 @@ def case_to_result(case_dict):
 
     return {
         "original_case": case_dict,
+        "case": case,  # Full Case object for debugging
         "distribution": distribution,
         "ending": case.ending,
         "asib": case.asib,

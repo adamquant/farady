@@ -251,6 +251,13 @@ def create_parser() -> argparse.ArgumentParser:
         help="Show verbose output with calculation details",
     )
 
+    debug_group = parser.add_argument_group("Debugging")
+    debug_group.add_argument(
+        "--debug",
+        action="store_true",
+        help="Show full debug output with complete Case object details",
+    )
+
     return parser
 
 
@@ -297,9 +304,27 @@ def print_results(
     result_case,
     provided_members: dict[str, int | bool],
     verbose: bool = False,
+    debug: bool = False,
 ) -> None:
-    """Print the inheritance distribution results as a table."""
+    """Print the inheritance distribution results."""
 
+    # Debug mode: Show full Case object
+    if debug:
+        print("\n" + "=" * 60)
+        print("         FULL DEBUG OUTPUT")
+        print("=" * 60)
+        print(f"Case object: {result_case}")
+        print(f"Distribution card: {_build_distribution(result_case)}")
+        print(f"Total shares: {result_case.total_shares}")
+        print(f"Raas: {result_case.raas}")
+        print(f"Total fraction: {result_case.total}")
+        print(f"Ending: {result_case.ending}")
+        print(f"Asib: {result_case.asib}")
+        print(f"Status: {result_case.status}")
+        print()
+        return
+
+    # Standard output
     print("\n" + "=" * 60)
     print("         ISLAMIC INHERITANCE DISTRIBUTION")
     print("=" * 60)
@@ -336,7 +361,8 @@ def print_results(
     print(f"{'Total':<35} {total_shares:>10} {format_percentage(total_fraction):>12}")
     print("=" * 60)
 
-    if verbose or result_case.ending:
+    # Verbose mode: Show additional calculation details
+    if verbose:
         print(f"\nDistribution Method: {result_case.ending or 'Standard'}")
         if result_case.asib:
             print(
@@ -363,7 +389,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     case = InheritanceCase.from_dict(provided_members)
     result_case = InheritanceCalculator(case)
 
-    print_results(result_case, provided_members, args.verbose)
+    print_results(result_case, provided_members, args.verbose, args.debug)
 
     if result_case.status != "Complete":
         return 1

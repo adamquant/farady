@@ -214,6 +214,49 @@ def calculate_inheritance(**family_members) -> Case:
     return calculate(case)
 
 
+def debug_calculate(case: Case, original_input: dict | None = None) -> dict:
+    """Calculate inheritance with full debugging information.
+
+    Args:
+        case: Case object to calculate
+        original_input: Optional original input data for debugging context
+
+    Returns:
+        dict with debugging information:
+        - 'input': Original input data (if provided)
+        - 'case': Full calculated Case object
+        - 'distribution': Simplified distribution card
+        - 'summary': Key calculation metrics
+    """
+    # Perform calculation
+    result_case = calculate(case)
+
+    # Build distribution card
+    distribution = _build_distribution(result_case)
+
+    # Create summary
+    summary = {
+        "total_shares": result_case.total_shares,
+        "raas": result_case.raas,
+        "total_fraction": float(result_case.total),
+        "ending": result_case.ending,
+        "asib": result_case.asib,
+        "status": result_case.status,
+    }
+
+    # Return comprehensive debug info
+    debug_info = {
+        "case": result_case,
+        "distribution": distribution,
+        "summary": summary,
+    }
+
+    if original_input is not None:
+        debug_info["input"] = original_input
+
+    return debug_info
+
+
 def calculate_from_dict(family_data: dict) -> Case:
     """Calculate inheritance from a dictionary.
 
