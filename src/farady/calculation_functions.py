@@ -412,11 +412,11 @@ def radd_step(case: Case) -> Case:
     """Apply radd (return) when shares are less than 1.
 
     When the total of fard shares is less than 1, the remaining (baqi)
-    goes back to fard holders proportionally, EXCLUDING spouses.
+    goes back to fard holders proportionally, INCLUDING spouses in this build - future fucntionality will allow for a choice of classic vs conemporary spousal treatment w/r radd (AA)
     """
     baqi = case.baqi
     if baqi <= 0:
-        return case
+        return case, "no radd needed, check awl"
 
     radd_heirs = []
     radd_shares_total = 0
