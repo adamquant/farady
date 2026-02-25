@@ -183,19 +183,51 @@ def _determine_status(case: Case) -> str:
 
 
 def _build_distribution(case: Case) -> dict[str, float]:
-    """Build distribution dict from case."""
+    """Build distribution dict from case with detailed information."""
     raas = case.raas if case.raas else 1
     distribution = {}
+
     for name, heir in zip(case._all_heir_names, case._all_heirs):
         shares = heir.get("shares")
         fard = heir.get("fard")
 
         if shares is not None and shares > 0:
-            distribution[name] = float(shares) / raas
+            distribution[name] = {
+                "shares": float(shares),
+                "fraction": float(shares) / raas,
+                "total": case.total,
+                "raas": case.raas,
+                "baqi": case.baqi,
+                "status": case.status,
+                "ending": case.ending,
+            }
         elif fard is not None and fard > 0:
-            distribution[name] = float(fard)
+            distribution[name] = {
+                "fard": float(fard),
+                "fraction": float(fard) / raas,
+                "total": case.total,
+                "raas": case.raas,
+                "baqi": case.baqi,
+                "status": case.status,
+                "ending": case.ending,
+            }
 
-    return {k: round(v, 4) for k, v in distribution.items() if v != 0}
+    # Remove zero values and simplify structure
+    simplified = {}
+    for k, v in distribution.items():
+        if isinstance(v, dict):
+            if v.get("shares") or v.get("fard"):
+                simplified[k] = {
+                    "value": v.get("shares") if v.get("shares") else v.get("fard"),
+                    "fraction": v["fraction"],
+                    "total": v["total"],
+                    "raas": v["raas"],
+                    "baqi": v["baqi"],
+                    "status": v["status"],
+                    "ending": v["ending"],
+                }
+
+    return simplified
 
 
 def calculate_inheritance(**family_members) -> Case:
