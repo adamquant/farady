@@ -154,7 +154,7 @@ def calculate(case: Case) -> Case:
             "asib": case.asib,
             "total": case.total,
             "status": case.status,
-            "denominator": case.raas,
+            "raas": case.raas,
         },
     )
 
@@ -182,52 +182,19 @@ def _determine_status(case: Case) -> str:
         return "Unknown"
 
 
-def _build_distribution(case: Case) -> dict[str, float]:
-    """Build distribution dict from case with detailed information."""
-    raas = case.raas if case.raas else 1
+def _build_distribution(case: Case) -> dict[str, int]:
+    """Build simplified distribution dict from case with heir name and share value only."""
     distribution = {}
 
     for name, heir in zip(case._all_heir_names, case._all_heirs):
         shares = heir.get("shares")
-        fard = heir.get("fard")
 
+        # Only include heirs with positive shares
         if shares is not None and shares > 0:
-            distribution[name] = {
-                "shares": float(shares),
-                "fraction": float(shares) / raas,
-                "total": case.total,
-                "raas": case.raas,
-                "baqi": case.baqi,
-                "status": case.status,
-                "ending": case.ending,
-            }
-        elif fard is not None and fard > 0:
-            distribution[name] = {
-                "fard": float(fard),
-                "fraction": float(fard) / raas,
-                "total": case.total,
-                "raas": case.raas,
-                "baqi": case.baqi,
-                "status": case.status,
-                "ending": case.ending,
-            }
+            # Convert to integer if it's a float (shouldn't happen with our fixes)
+            distribution[name] = int(shares)
 
-    # Remove zero values and simplify structure
-    simplified = {}
-    for k, v in distribution.items():
-        if isinstance(v, dict):
-            if v.get("shares") or v.get("fard"):
-                simplified[k] = {
-                    "value": v.get("shares") if v.get("shares") else v.get("fard"),
-                    "fraction": v["fraction"],
-                    "total": v["total"],
-                    "raas": v["raas"],
-                    "baqi": v["baqi"],
-                    "status": v["status"],
-                    "ending": v["ending"],
-                }
-
-    return simplified
+    return distribution
 
 
 def calculate_inheritance(**family_members) -> Case:

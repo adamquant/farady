@@ -284,13 +284,20 @@ class Case:
         return reduce(lcm, denominators)
 
     @property
-    def total(self) -> int:
+    def total_shares(self) -> int:
         """Calculate total shares allocated from all heirs' shares."""
         return sum(
             heir.get("shares", 0)
             for heir in self._all_heirs
-            if isinstance(heir.get("shares"), (int, float))
+            if isinstance(heir.get("shares"), int)
         )
+
+    @property
+    def total(self) -> float:
+        """Calculate total portion as a fraction of raas."""
+        if self.raas == 0:
+            return 0.0
+        return float(self.total_shares) / float(self.raas)
 
     @property
     def baqi(self) -> int:
@@ -341,6 +348,9 @@ class Case:
             "zawja",
         }
 
+        # Define heirs that should be limited to a maximum count of 1
+        single_person_heirs = {"umm", "ab", "jadd", "zawj", "zawja"}
+
         kwargs = {}
         for key, value in data.items():
             if key not in valid_fields:
@@ -363,6 +373,10 @@ class Case:
                 count = int(value)
             else:
                 continue
+
+            # Apply constraint: certain heirs can never be more than 1
+            if key in single_person_heirs and count > 1:
+                count = 1
 
             kwargs[key] = {"count": count}
 

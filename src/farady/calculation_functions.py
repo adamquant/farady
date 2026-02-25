@@ -416,7 +416,7 @@ def radd_step(case: Case) -> Case:
     """
     baqi = case.baqi
     if baqi <= 0:
-        return case, "no radd needed, check awl"
+        return case
 
     radd_heirs = []
     radd_shares_total = 0
