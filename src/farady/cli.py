@@ -61,12 +61,10 @@ import argparse
 import sys
 from collections.abc import Sequence
 
-from farady.distribution import (
-    InheritanceCase,
-    InheritanceCalculator,
-    InheritanceResult,
-    PRETTY_NAMES,
-)
+from farady.classes import Case as InheritanceCase
+from farady.pipelines import calculate as InheritanceCalculator
+from farady.pipelines import _build_distribution
+from farady.processing import PRETTY_NAMES
 
 
 def format_fraction(value: float) -> str:
@@ -296,7 +294,7 @@ def get_provided_members(args: argparse.Namespace) -> dict[str, int | bool]:
 
 
 def print_results(
-    result: InheritanceResult,
+    result_case,
     provided_members: dict[str, int | bool],
     verbose: bool = False,
 ) -> None:
@@ -316,31 +314,35 @@ def print_results(
             else:
                 print(f"  {pretty_name}: {value}")
 
+    # Build distribution
+    distribution = _build_distribution(result_case)
+
     print("\n" + "-" * 60)
     print(f"{'Beneficiary':<35} {'Share':>10} {'Percentage':>12}")
     print("-" * 60)
 
-    sorted_dist = sorted(
-        result.distribution.items(), key=lambda x: float(x[1]), reverse=True
-    )
+    sorted_dist = sorted(distribution.items(), key=lambda x: float(x[1]), reverse=True)
 
+    raas = result_case.raas
     for member, share in sorted_dist:
         pretty_name = PRETTY_NAMES.get(member, member)
-        frac_str = format_fraction(share)
-        pct_str = format_percentage(share)
+        frac_str = str(share)
+        pct_str = format_percentage(float(share) / float(raas) if raas > 0 else 0.0)
         print(f"{pretty_name:<35} {frac_str:>10} {pct_str:>12}")
 
     print("-" * 60)
-    print(
-        f"{'Total':<35} {format_fraction(result.total):>10} {format_percentage(result.total):>12}"
-    )
+    total_shares = result_case.total_shares
+    total_fraction = result_case.total
+    print(f"{'Total':<35} {total_shares:>10} {format_percentage(total_fraction):>12}")
     print("=" * 60)
 
-    if verbose or result.ending:
-        print(f"\nDistribution Method: {result.ending or 'Standard'}")
-        if result.asib:
-            print(f"Residual Heir (Asib): {PRETTY_NAMES.get(result.asib, result.asib)}")
-        print(f"Status: {result.status}")
+    if verbose or result_case.ending:
+        print(f"\nDistribution Method: {result_case.ending or 'Standard'}")
+        if result_case.asib:
+            print(
+                f"Residual Heir (Asib): {PRETTY_NAMES.get(result_case.asib, result_case.asib)}"
+            )
+        print(f"Status: {result_case.status}")
 
     print()
 
@@ -357,13 +359,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("\nError: At least one family member must be specified.")
         return 1
 
-    case = InheritanceCase(**provided_members)  # type: ignore[arg-type]
-    calculator = InheritanceCalculator()
-    result = calculator.calculate(case)
+    # Create case and calculate
+    case = InheritanceCase.from_dict(provided_members)
+    result_case = InheritanceCalculator(case)
 
-    print_results(result, provided_members, args.verbose)
+    print_results(result_case, provided_members, args.verbose)
 
-    if result.status != "Complete":
+    if result_case.status != "Complete":
         return 1
 
     return 0

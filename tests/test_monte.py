@@ -61,10 +61,8 @@ def case_to_result(case_dict):
     # Build distribution
     distribution = _build_distribution(case)
 
-    # Calculate total from distribution
-    total = (
-        sum(item["fraction"] for item in distribution.values()) if distribution else 0
-    )
+    # Calculate total from distribution (now it's just sum of shares / raas)
+    total = case.total
 
     return {
         "original_case": case_dict,
