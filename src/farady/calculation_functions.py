@@ -412,11 +412,11 @@ def radd_step(case: Case) -> Case:
     """Apply radd (return) when shares are less than 1.
 
     When the total of fard shares is less than 1, the remaining (baqi)
-    goes back to fard holders proportionally, EXCLUDING spouses.
+    goes back to fard holders proportionally, INCLUDING spouses in this build - future fucntionality will allow for a choice of classic vs conemporary spousal treatment w/r radd (AA)
     """
     baqi = case.baqi
     if baqi <= 0:
-        return case
+        return case, "no radd needed, check awl"
 
     radd_heirs = []
     radd_shares_total = 0
@@ -453,8 +453,24 @@ def radd_step(case: Case) -> Case:
         radd_shares_total *= multiplier
         radd_heirs = [(n, h, h.get("shares", 0)) for n, h, _ in radd_heirs]
 
+    # Use fractional arithmetic for precise radd calculation
+    total_shares = sum(shares for _, _, shares in radd_heirs)
+
+    # Use fractional arithmetic for precise radd calculation
+    total_shares = sum(shares for _, _, shares in radd_heirs)
+
     for name, heir, shares in radd_heirs:
-        radd_portion = (baqi * shares) // radd_shares_total
+        # Calculate exact fractional radd portion
+        radd_fraction = frac(baqi) * frac(shares, total_shares)
+        radd_portion = radd_fraction.numerator // radd_fraction.denominator
+
+        # If there's a remainder, distribute it proportionally
+        remainder = radd_fraction.numerator % radd_fraction.denominator
+        if remainder:
+            # Distribute remainder proportionally to avoid truncation
+            if radd_heirs.index((name, heir, shares)) == 0:
+                radd_portion += 1
+
         heir["shares"] = heir.get("shares", 0) + radd_portion
 
     return case
