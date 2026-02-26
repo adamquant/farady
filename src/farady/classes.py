@@ -53,6 +53,12 @@ class Case:
     heads: int | None = None
     _raas_override: int | None = None
 
+    # Calculation state tracking attributes
+    shaqiqa_taking_half: bool | None = None
+    shaqiqas_taking_twothirds: bool | None = None
+    bint_taking_half: bool | None = None
+    bints_taking_twothirds: bool | None = None
+
     @property
     def _all_heirs(self) -> list[HeirData]:
         return [
@@ -184,21 +190,21 @@ class Case:
         return any(heir.get("asib", False) for heir in self._all_heirs)
 
     @property
-    def bint_taking_half(self) -> bool:
+    def is_bint_taking_half(self) -> bool:
         bint_heirs = [self.bint, self.bibn, self.biibn]
         return any(heir.get("fard") == frac(1, 2) for heir in bint_heirs)
 
     @property
-    def bints_taking_twothirds(self) -> bool:
+    def is_bints_taking_twothirds(self) -> bool:
         bint_heirs = [self.bint, self.bibn, self.biibn]
         return any(heir.get("fard") == frac(2, 3) for heir in bint_heirs)
 
     @property
-    def shaqiqa_taking_half(self) -> bool:
+    def is_shaqiqa_taking_half(self) -> bool:
         return self.shaqiqa.get("fard") == frac(1, 2)
 
     @property
-    def shaqiqa_taking_twothirds(self) -> bool:
+    def is_shaqiqa_taking_twothirds(self) -> bool:
         return self.shaqiqa.get("fard") == frac(2, 3)
 
     @property

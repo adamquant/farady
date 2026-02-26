@@ -3,7 +3,7 @@
 [![License: AGPLv3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](LICENSE)
 [![Python Version](https://img.shields.io/pypi/pyversions/farady)](https://pypi.org/project/farady/)
 [![CI](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
-[![Release Tests](https://github.com/adamquant/farady-dev/actions/workflows/release-sa-tests.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/release-sa-tests.yml)
+[![Coverage Status](https://coveralls.io/repos/github/adamquant/farady-dev/badge.svg?branch=main)](https://coveralls.io/github/adamquant/farady-dev?branch=main)
 
 A Python library and CLI tool for calculating Islamic inheritance distribution according to Faraid (Islamic inheritance law).
 

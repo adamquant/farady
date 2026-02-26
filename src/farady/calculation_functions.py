@@ -154,8 +154,6 @@ def usool_step(case: Case) -> Case:
 
 def furoo_step(case: Case) -> Case:
     """Calculate furoo (descendants) shares - children and grandchildren."""
-    bint_taking_half = False
-    bints_taking_twothirds = False
 
     ibn_count = case.ibn.get("count", 0)
     bint_count = case.bint.get("count", 0)
@@ -171,10 +169,10 @@ def furoo_step(case: Case) -> Case:
     elif not ibn_count and bint_count:
         if bint_count == 1:
             case.bint["fard"] = frac(1, 2)
-            bint_taking_half = True
+            case.bint_taking_half = True
         else:
             case.bint["fard"] = frac(2, 3)
-            bints_taking_twothirds = True
+            case.bints_taking_twothirds = True
 
     if case.asib is None and (iibn_count or bibn_count):
         if iibn_count:
@@ -182,17 +180,17 @@ def furoo_step(case: Case) -> Case:
                 case.asib = "iibn"
             else:
                 case.asib = "iibn-bibn"
-        elif bibn_count and bint_taking_half:
+        elif bibn_count and case.bint_taking_half:
             case.bibn["fard"] = frac(1, 6)
-            bints_taking_twothirds = True
-        elif bibn_count and not (bint_taking_half or bints_taking_twothirds):
+            case.bints_taking_twothirds = True
+        elif bibn_count and not (case.bint_taking_half or case.bints_taking_twothirds):
             if bibn_count == 1:
                 case.bibn["fard"] = frac(1, 2)
-                bint_taking_half = True
+                case.bint_taking_half = True
             else:
                 case.bibn["fard"] = frac(2, 3)
-                bints_taking_twothirds = True
-        elif bints_taking_twothirds and bibn_count:
+                case.bints_taking_twothirds = True
+        elif case.bints_taking_twothirds and bibn_count:
             pass
 
     if case.asib is None:
@@ -205,10 +203,10 @@ def furoo_step(case: Case) -> Case:
                 case.asib = "iiibn-biibn"
             if bibn_count and biibn_count:
                 case.asib = "iiibn-biibn-bibn"
-        elif biibn_count and bint_taking_half and not bints_taking_twothirds:
+        elif biibn_count and case.bint_taking_half and not case.bints_taking_twothirds:
             case.biibn["fard"] = frac(1, 6)
-            bints_taking_twothirds = True
-        elif biibn_count and not (bints_taking_twothirds or bint_taking_half):
+            case.bints_taking_twothirds = True
+        elif biibn_count and not (case.bints_taking_twothirds or case.bint_taking_half):
             if biibn_count == 1:
                 case.biibn["fard"] = frac(1, 2)
             else:
@@ -225,69 +223,61 @@ def hawashi_step(case: Case) -> Case:
     - Full and half nephews
     - Uncles
     """
-    bint_taking_half = case.bint_taking_half
-    bints_taking_twothirds = case.bints_taking_twothirds
-    has_any_furoo = case.has_any_furoo
 
-    shaqiq_count = case.shaqiq.get("count", 0)
-    shaqiqa_count = case.shaqiqa.get("count", 0)
-    aliab_count = case.aliab.get("count", 0)
-    uliab_count = case.uliab.get("count", 0)
+    case.shaqiqa_taking_half = False
+    case.shaqiqas_taking_twothirds = False
 
-    shaqiqa_taking_half = False
-    shaqiqas_taking_twothirds = False
-
-    if shaqiq_count and not shaqiqa_count:
+    if case.shaqiq.get("count", 0) and not case.shaqiqa.get("count", 0):
         case.asib = "shaqiq"
-    elif shaqiq_count and shaqiqa_count:
+    elif case.shaqiq.get("count", 0) and case.shaqiqa.get("count", 0):
         case.asib = "shaqiq-shaqiqa"
-    elif not shaqiq_count and shaqiqa_count and not case.has_any_furoo:
-        if shaqiqa_count == 1:
+    elif not case.shaqiq.get("count", 0) and case.shaqiqa.get("count", 0) and not case.has_any_furoo:
+        if case.shaqiqa.get("count", 0) == 1:
             case.shaqiqa["fard"] = frac("1/2")
-            shaqiqa_taking_half = True
-        elif shaqiqa_count > 1:
+            case.shaqiqa_taking_half = True
+        elif case.shaqiqa.get("count", 0) > 1:
             case.shaqiqa["fard"] = frac("2/3")
-            shaqiqas_taking_twothirds = True
+            case.shaqiqas_taking_twothirds = True 
     elif (
         case.asib is None
-        and shaqiqa_count
-        and (bint_taking_half or bints_taking_twothirds)
+        and case.shaqiqa.get("count", 0)
+        and (case.bint_taking_half or case.bints_taking_twothirds) # @adam double check these
     ):
         case.asib = "shaqiqa"
 
     if case.asib is None:
-        if aliab_count and not uliab_count:
+        if case.aliab.get("count", 0) and not case.uliab.get("count", 0):
             case.asib = "aliab"
-        elif case.asib is None and aliab_count and uliab_count:
+        elif case.asib is None and case.aliab.get("count", 0) and case.uliab.get("count", 0):
             case.asib = "aliab-uliab"
         elif (
             case.asib is None
-            and uliab_count
-            and not shaqiqa_count
-            and (bint_taking_half or bints_taking_twothirds)
+            and case.uliab.get("count", 0)
+            and not case.shaqiqa.get("count", 0)
+            and (case.bint_taking_half or case.bints_taking_twothirds)
         ):
             case.asib = "uliab"
-        elif not aliab_count:
+        elif not case.aliab.get("count", 0):
             if (
-                uliab_count
+                case.uliab.get("count", 0)
                 and not case.has_any_furoo
-                and shaqiqa_count
-                and shaqiqa_taking_half
+                and case.shaqiqa.get("count", 0)
+                and case.shaqiqa_taking_half
                 and not any(
                     (
-                        shaqiqas_taking_twothirds,
-                        bints_taking_twothirds,
-                        bint_taking_half,
+                        case.shaqiqas_taking_twothirds,
+                        case.bints_taking_twothirds,
+                        case.bint_taking_half,
                     )
                 )
             ):
                 case.uliab["fard"] = frac("1/6")
             elif (
-                uliab_count
+                case.uliab.get("count", 0)
                 and not case.has_any_furoo
-                and not (shaqiqa_count or shaqiq_count)
+                and not (case.shaqiqa.get("count", 0) or case.shaqiq.get("count", 0))
             ):
-                case.uliab["fard"] = frac(1, 2) if uliab_count == 1 else frac(2, 3)
+                case.uliab["fard"] = frac(1, 2) if case.uliab.get("count", 0) == 1 else frac(2, 3)
 
     if case.asib is None:
         if case.ibnamm_sh.get("count"):

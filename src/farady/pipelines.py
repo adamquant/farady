@@ -87,6 +87,9 @@ def calculate(case: Case) -> Case:
     """
     log_calculation_start(_logger, {"case": case.to_dict()})
 
+
+    ###=== VALIDATION +++###
+
     # Validate umm (mother) - should not be more than 1
     umm_count = case.umm.get('count', 0) if case.umm else 0
     if not (case.umm is None or (isinstance(umm_count, (int, float)) and 0 <= umm_count <= 1)):
@@ -120,6 +123,9 @@ def calculate(case: Case) -> Case:
         case.status = "Failed"
         return case
 
+
+    ###+++ SPECIAL CASES +++###
+
     if case.is_umuriya:
         if case.is_umuriya1:
             case.zawj["fard"] = frac("3/6")
@@ -141,6 +147,8 @@ def calculate(case: Case) -> Case:
             case.jadda["fard"] = frac("1/6")
         case.ending = "mushtaraka"
 
+    ###=== REGULAR CASES ===###
+    
     else:
         if case.is_married:
             case = zawjayn_step(case)
@@ -152,7 +160,7 @@ def calculate(case: Case) -> Case:
             case = furoo_step(case)
 
         if case.has_hawashi:
-            if not (case.has_m_usool or case.has_m_furoo):
+            if not (case.has_m_usool or case.has_m_furoo): # hanbali for now @adam
                 case = hawashi_step(case)
 
         if case.is_kalala:
@@ -160,36 +168,22 @@ def calculate(case: Case) -> Case:
 
     case = convert_fard_to_shares(case)
 
+    ###+++ GRACEFUL ENDINGS +++###
+
     if case.baqi < 0:
-        log_calculation_step(_logger, "awl", {"baqi": case.baqi, "raas": case.raas})
         case = awl_step(case)
         case.ending = "awl"
-
+    
     elif case.baqi > 0:
         if case.asib_present or case.asib:
-            log_calculation_step(
-                _logger, "taseeb", {"baqi": case.baqi, "asib": case.asib}
-            )
             case = taseeb_step(case)
             case.ending = "taseeb"
         elif case.total > 0:
-            log_calculation_step(_logger, "radd", {"baqi": case.baqi})
             case = radd_step(case)
             case.ending = "radd"
 
     case.status = _determine_status(case)
 
-    log_calculation_end(
-        _logger,
-        {
-            "distribution": _build_distribution(case),
-            "ending": case.ending,
-            "asib": case.asib,
-            "total": case.total,
-            "status": case.status,
-            "raas": case.raas,
-        },
-    )
 
     return case
 
