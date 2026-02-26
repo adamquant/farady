@@ -46,7 +46,8 @@ class Case:
     amm: HeirData = field(default_factory=_default_heir_data)
     zawj: HeirData = field(default_factory=_default_heir_data)
     zawja: HeirData = field(default_factory=_default_heir_data)
-
+    
+    CLASSIC_RADD: bool = False
     ending: str | None = None
     asib: str | None = None
     status: str | None = None
@@ -273,7 +274,7 @@ class Case:
         if self._raas_override is not None:
             return self._raas_override
 
-        def lcm(a: int, b: int) -> int:
+        def lcm(a: int, b: int) -> int: # @adam update to newer built in since 3.9
             from math import gcd
 
             return abs(a * b) // gcd(a, b) if a and b else (a or b)

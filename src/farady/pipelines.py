@@ -176,7 +176,7 @@ def calculate(case: Case) -> Case:
     elif case.asib_present:
         case = taseeb_step(case) 
 
-    elif case.baqi > 0:
+    elif case.baqi > 0 and case.total_shares > 0:
         case = radd_step(case)
 
     case.status = _determine_status(case)
