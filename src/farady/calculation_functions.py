@@ -49,10 +49,11 @@ def inkisaar(case: Case) -> Case:
 
     if math.gcd(case.heads, case.baqi) == 1:
         new_raas = case.heads * case.raas
-        print(f'1. new raas issss {new_raas}')
-    else:
+    elif case.baqi > case.heads:
         new_raas = math.gcd(case.heads, case.baqi) * case.raas
-        print(f'2. new raas issss {new_raas}')
+    elif case.baqi < case.heads:
+        new_raas = int((case.heads / case.baqi) * case.raas)
+
     
     multiplier = new_raas // case.raas
 
@@ -130,7 +131,7 @@ def usool_step(case: Case) -> Case:
         elif case.jadda.get("count"):
             case.jadda["fard"] = frac("1/6")
 
-    elif not has_any_furoo and not has_jame:
+    elif not case.has_any_furoo and not has_jame:
         if case.umm.get("count"):
             case.umm["fard"] = frac("1/3")
         elif case.jadda.get("count"):
@@ -240,7 +241,7 @@ def hawashi_step(case: Case) -> Case:
         case.asib = "shaqiq"
     elif shaqiq_count and shaqiqa_count:
         case.asib = "shaqiq-shaqiqa"
-    elif not shaqiq_count and shaqiqa_count and not has_any_furoo:
+    elif not shaqiq_count and shaqiqa_count and not case.has_any_furoo:
         if shaqiqa_count == 1:
             case.shaqiqa["fard"] = frac("1/2")
             shaqiqa_taking_half = True
@@ -269,7 +270,7 @@ def hawashi_step(case: Case) -> Case:
         elif not aliab_count:
             if (
                 uliab_count
-                and not has_any_furoo
+                and not case.has_any_furoo
                 and shaqiqa_count
                 and shaqiqa_taking_half
                 and not any(
@@ -283,7 +284,7 @@ def hawashi_step(case: Case) -> Case:
                 case.uliab["fard"] = frac("1/6")
             elif (
                 uliab_count
-                and not has_any_furoo
+                and not case.has_any_furoo
                 and not (shaqiqa_count or shaqiq_count)
             ):
                 case.uliab["fard"] = frac(1, 2) if uliab_count == 1 else frac(2, 3)
@@ -310,7 +311,6 @@ def taseeb_step(case: Case) -> Case:
         return case
 
     case.heads = _compute_heads(case)
-    print(f"heads ARREEEEEE: {case.heads}")
     if case.heads == 0:
         return case
 
@@ -319,17 +319,15 @@ def taseeb_step(case: Case) -> Case:
     if case.baqi % case.heads != 0:
         case = inkisaar(case)
 
-    print(case.baqi,case.heads, case.raas)
-
     asib = case.asib
     taseeb_unit = case.baqi // case.heads
 
     if asib == "ibn":
-        case.ibn["shares"] = case.ibn.get("shares", 0) + baqi
+        case.ibn["shares"] = case.ibn.get("shares", 0) + case.baqi
     elif asib == "iibn":
-        case.iibn["shares"] = case.iibn.get("shares", 0) + baqi
+        case.iibn["shares"] = case.iibn.get("shares", 0) + case.baqi
     elif asib == "iiibn":
-        case.iiibn["shares"] = case.iiibn.get("shares", 0) + baqi
+        case.iiibn["shares"] = case.iiibn.get("shares", 0) + case.baqi
     elif asib == "ibn-bint":
         case.ibn["shares"] = (
             case.ibn.get("shares", 0) + case.ibn.get("count", 0) * 2 * taseeb_unit
@@ -362,13 +360,13 @@ def taseeb_step(case: Case) -> Case:
             case.bibn.get("shares", 0) + case.bibn.get("count", 0) * taseeb_unit
         )
     elif asib == "ab":
-        case.ab["shares"] = case.ab.get("shares", 0) + baqi
+        case.ab["shares"] = case.ab.get("shares", 0) + case.baqi
     elif asib == "jadd":
-        case.jadd["shares"] = case.jadd.get("shares", 0) + baqi
+        case.jadd["shares"] = case.jadd.get("shares", 0) + case.baqi
     elif asib == "shaqiq":
-        case.shaqiq["shares"] = case.shaqiq.get("shares", 0) + baqi
+        case.shaqiq["shares"] = case.shaqiq.get("shares", 0) + case.baqi
     elif asib == "shaqiqa":
-        case.shaqiqa["shares"] = case.shaqiqa.get("shares", 0) + baqi
+        case.shaqiqa["shares"] = case.shaqiqa.get("shares", 0) + case.baqi
     elif asib == "shaqiq-shaqiqa":
         case.shaqiq["shares"] = (
             case.shaqiq.get("shares", 0) + case.shaqiq.get("count", 0) * 2 * taseeb_unit
@@ -377,9 +375,9 @@ def taseeb_step(case: Case) -> Case:
             case.shaqiqa.get("shares", 0) + case.shaqiqa.get("count", 0) * taseeb_unit
         )
     elif asib == "aliab":
-        case.aliab["shares"] = case.aliab.get("shares", 0) + baqi
+        case.aliab["shares"] = case.aliab.get("shares", 0) + case.baqi
     elif asib == "uliab":
-        case.uliab["shares"] = case.uliab.get("shares", 0) + baqi
+        case.uliab["shares"] = case.uliab.get("shares", 0) + case.baqi
     elif asib == "aliab-uliab":
         case.aliab["shares"] = (
             case.aliab.get("shares", 0) + case.aliab.get("count", 0) * 2 * taseeb_unit
@@ -388,11 +386,11 @@ def taseeb_step(case: Case) -> Case:
             case.uliab.get("shares", 0) + case.uliab.get("count", 0) * taseeb_unit
         )
     elif asib == "ibnamm_sh":
-        case.ibnamm_sh["shares"] = case.ibnamm_sh.get("shares", 0) + baqi
+        case.ibnamm_sh["shares"] = case.ibnamm_sh.get("shares", 0) + case.baqi
     elif asib == "ibnamm_liab":
-        case.ibnamm_liab["shares"] = case.ibnamm_liab.get("shares", 0) + baqi
+        case.ibnamm_liab["shares"] = case.ibnamm_liab.get("shares", 0) + case.baqi
     elif asib == "amm":
-        case.amm["shares"] = case.amm.get("shares", 0) + baqi
+        case.amm["shares"] = case.amm.get("shares", 0) + case.baqi
 
     return case
 
@@ -422,8 +420,7 @@ def radd_step(case: Case) -> Case:
     When the total of fard shares is less than 1, the remaining (baqi)
     goes back to fard holders proportionally, INCLUDING spouses in this build - future functionality will allow for a choice of classic vs contemporary spousal treatment w/r radd (AA)
     """
-    baqi = case.baqi
-    if baqi <= 0:
+    if case.baqi <= 0:
         return case
 
     radd_heirs = []
@@ -442,11 +439,11 @@ def radd_step(case: Case) -> Case:
             for name in ("zawj", "zawja"):
                 heir = getattr(case, name)
                 if heir.get("shares", 0) > 0:
-                    heir["shares"] = heir.get("shares", 0) + baqi
+                    heir["shares"] = heir.get("shares", 0) + case.baqi
                     break
         return case
 
-    if baqi % radd_shares_total != 0:
+    if case.baqi % radd_shares_total != 0:
         old_raas = case.raas
         new_raas = _lcm(old_raas, radd_shares_total)
         multiplier = new_raas // old_raas
@@ -457,7 +454,6 @@ def radd_step(case: Case) -> Case:
                 heir["shares"] = shares * multiplier
 
         case._raas_override = new_raas
-        baqi = case.baqi
         radd_shares_total *= multiplier
         radd_heirs = [(n, h, h.get("shares", 0)) for n, h, _ in radd_heirs]
 
@@ -468,13 +464,13 @@ def radd_step(case: Case) -> Case:
     total_radd_distributed = 0
     for i, (name, heir, shares) in enumerate(radd_heirs):
         # Calculate exact fractional radd portion
-        radd_fraction = frac(baqi) * frac(shares, total_shares)
+        radd_fraction = frac(case.baqi) * frac(shares, total_shares)
         radd_portion = int(radd_fraction)  # Integer division to get whole shares
 
         # Handle remainder - distribute it to the first heir to avoid fractional shares
         if i == 0:
-            remainder = baqi - sum(
-                int(frac(baqi) * frac(h_shares, total_shares))
+            remainder = case.baqi - sum(
+                int(frac(case.baqi) * frac(h_shares, total_shares))
                 for _, _, h_shares in radd_heirs
             )
             radd_portion += remainder

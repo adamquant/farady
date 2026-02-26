@@ -196,20 +196,9 @@ def calculate(case: Case) -> Case:
 
 def _determine_status(case: Case) -> str:
     """Determine the status of the calculation."""
-    final_total = case.total
-
-    if case.raas > 0:
-        allocated = case.total
-        if allocated == 0 and case.ending is None:
-            return "Failed"
-        elif round(allocated, 2) == 1.00:
-            return "Complete"
-        else:
-            return "Unknown"
-
-    if final_total == 0 and case.ending is None:
+    if case.total == 0 and case.ending is None:
         return "Failed"
-    elif round(final_total, 2) == 1.00:
+    elif round(case.total, 3) == 1.00:
         return "Complete"
     else:
         return "Unknown"
