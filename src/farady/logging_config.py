@@ -143,10 +143,12 @@ def get_logger(name: str) -> logging.Logger:
         file_handler.setFormatter(CalculationFormatter())
         logger.addHandler(file_handler)
 
-        console_handler = logging.StreamHandler()
-        console_handler.setLevel(level)
-        console_handler.setFormatter(CalculationFormatter())
-        logger.addHandler(console_handler)
+        # Only add console handler if not in test mode
+        if not os.environ.get("FARADY_TEST_MODE"):
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(level)
+            console_handler.setFormatter(CalculationFormatter())
+            logger.addHandler(console_handler)
 
     _LOGGER_CACHE[name] = logger
     return logger

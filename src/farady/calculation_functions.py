@@ -104,19 +104,17 @@ def kalala_step(case: Case) -> Case:
 
 def usool_step(case: Case) -> Case:
     """Calculate usool (roots) shares - parents and grandparents."""
-    has_any_furoo = case.has_any_furoo
-    has_m_furoo = case.has_m_furoo
     has_jame = case.has_jame
 
-    if has_any_furoo:
+    if case.has_any_furoo:
         if case.ab.get("count"):
             case.ab["fard"] = frac("1/6")
-            if not has_m_furoo:
+            if not case.has_m_furoo:
                 case.asib = "ab"
 
-        if case.jadd.get("count"):
+        elif case.jadd.get("count"):
             case.jadd["fard"] = frac("1/6")
-            if not has_m_furoo:
+            if not case.has_m_furoo:
                 case.asib = "jadd"
 
         if case.umm.get("count"):

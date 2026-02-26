@@ -64,6 +64,11 @@ def _get_version() -> str:
 
 
 def pytest_sessionstart(session):
+    # Set test mode to suppress console logging during tests
+    import os
+
+    os.environ["FARADY_TEST_MODE"] = "1"
+
     log_dir = Path(__file__).parent.parent / "logs"
     log_dir.mkdir(exist_ok=True)
     log_file = log_dir / f"pytest_{datetime.now().strftime('%Y%m%d')}.log"
@@ -125,9 +130,13 @@ def case_to_result(case) -> dict:
 def get_results() -> dict:
     cases = load_test_cases()
     # Default to 1000 cases for faster iteration, but allow customization
-    limit = int(os.environ.get("FARADY_MONTE_LIMIT", "1000"))
+    limit = int(os.environ.get("LIMIT", "1000"))
     if limit <= 0:
-        return {cat: [] for cat in CATEGORIES}
+        # No limit - process all cases
+        return {
+            cat: [(c, case_to_result(calculate_from_dict(c))) for c in cases[cat]]
+            for cat in CATEGORIES
+        }
     return {
         cat: [(c, case_to_result(calculate_from_dict(c))) for c in cases[cat][:limit]]
         for cat in CATEGORIES

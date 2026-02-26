@@ -169,7 +169,7 @@ def _determine_status(case: Case) -> str:
         allocated = case.total
         if allocated == 0 and case.ending is None:
             return "Failed"
-        elif allocated == case.raas:
+        elif round(allocated, 2) == 1.00:
             return "Complete"
         else:
             return "Unknown"

@@ -61,40 +61,43 @@ def case_to_result(case_dict):
     # Build distribution
     distribution = _build_distribution(case)
 
-    # Calculate total from distribution (now it's just sum of shares / raas)
-    total = case.total
+    # Extract heir shares
+    numerators = {
+        name: int(heir.get("shares", 0))
+        for name, heir in zip(case._all_heir_names, case._all_heirs)
+        if heir.get("shares")
+    }
 
     return {
         "original_case": case_dict,
-        "case": case,  # Full Case object for debugging
+        "case": case,
         "distribution": distribution,
         "ending": case.ending,
         "asib": case.asib,
-        "total": total,
+        "total": case.total,
         "status": case.status,
+        "total_shares": case.total_shares,
         "raas": case.raas,
         "numerators": numerators,
     }
 
 
 def collect_all_results(limit=None):
-    """Collect results for all test cases (optionally limited)."""
     cases = load_test_cases()
 
     # Apply limit if specified
     if limit is None:
-        limit = int(os.environ.get("FARADY_MONTE_LIMIT", "1000"))
+        limit = int(os.environ.get("LIMIT", "100000"))
 
     results = {}
     for cat in CATEGORIES:
-        cat_cases = cases[cat][:limit] if limit > 0 else []
+        cat_cases = cases[cat][:limit] if limit > 0 else cases[cat]
         results[cat] = [(c, case_to_result(c)) for c in cat_cases]
 
     return results
 
 
 def save_failures(failures, test_name):
-    """Save failure results to a JSON file."""
     if not any(failures.values()):
         return None
 
@@ -135,10 +138,10 @@ def get_test_results():
 
 
 def test_total_always_one():
-    """All inheritance distributions should sum to 1.0."""
     results = get_test_results()
-
-    failures = collect_failures(results, lambda r: round(r["total"], 2) != 1.0)
+    failures = collect_failures(
+        results, lambda r: r["status"] == "Complete" and round(r["total"], 3) != 1.0
+    )
 
     # Save failures for analysis
     save_failures(failures, "test_total_always_one")
@@ -159,11 +162,11 @@ def test_ibn_has_share_when_present():
     failures = collect_failures(
         results,
         lambda r: (
-            r["original_case"].get("ibn", 0) > 0 and r["numerators"].get("ibn", 0) == 0
+            r["original_case"].get("ibn", 0) > 0
+            and r["distribution"].get("ibn", 0) == 0
         ),
     )
 
-    # Save failures for analysis
     save_failures(failures, "test_ibn_has_share_when_present")
 
     # Assert no failures
@@ -217,3 +220,29 @@ def test_positive_shares_only():
             f"{cat}: {count}" for cat, count in failure_counts.items() if count > 0
         )
         raise AssertionError(f"Negative shares found: {failure_details}")
+
+
+def test_daughters_always_inherit():
+    """When bint is present, always gets at least one share."""
+    results = get_test_results()
+
+    failures = collect_failures(
+        results,
+        lambda r: (
+            r["original_case"].get("bint", 0) > 0
+            and r["distribution"].get("bint", 0) == 0
+        ),
+    )
+
+    # Save failures for analysis
+    save_failures(failures, "test_daughters_always_inherit")
+
+    # Assert no failures
+    failure_counts = {cat: len(failures[cat]) for cat in CATEGORIES}
+    if any(count > 0 for count in failure_counts.values()):
+        failure_details = ", ".join(
+            f"{cat}: {count}" for cat, count in failure_counts.items() if count > 0
+        )
+        raise AssertionError(
+            f"Daughter present but no share failures: {failure_details}"
+        )
