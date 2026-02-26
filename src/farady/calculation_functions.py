@@ -113,7 +113,6 @@ def kalala_step(case: Case) -> Case:
 
 def usool_step(case: Case) -> Case:
     """Calculate usool (roots) shares - parents and grandparents."""
-    has_jame = case.has_jame
 
     if case.has_any_furoo:
         if case.ab.get("count"):
@@ -131,13 +130,13 @@ def usool_step(case: Case) -> Case:
         elif case.jadda.get("count"):
             case.jadda["fard"] = frac("1/6")
 
-    elif not case.has_any_furoo and not has_jame:
+    elif not case.has_any_furoo and not case.has_jame:
         if case.umm.get("count"):
             case.umm["fard"] = frac("1/3")
         elif case.jadda.get("count"):
             case.jadda["fard"] = frac("1/6")
 
-    elif has_jame:
+    elif case.has_jame:
         if case.umm.get("count"):
             case.umm["fard"] = frac("1/6")
         elif case.jadda.get("count"):
@@ -279,7 +278,7 @@ def hawashi_step(case: Case) -> Case:
             ):
                 case.uliab["fard"] = frac(1, 2) if case.uliab.get("count", 0) == 1 else frac(2, 3)
 
-    if case.asib is None:
+    if case.asib_present and case.asib is None:
         if case.ibnamm_sh.get("count"):
             case.asib = "ibnamm_sh"
         elif case.ibnamm_liab.get("count"):
@@ -292,17 +291,18 @@ def hawashi_step(case: Case) -> Case:
 
 def taseeb_step(case: Case) -> Case:
     """Calculate ta'seeb (residual) shares.
-
+    you only get here is an asib is present. I like tha tbhavior and i want to standardise it.
     When there are asib (residual heirs), they receive the remaining portion.
     For mixed male/female asibs (lizakari): uses heads calculation.
     For single-type asibs: baqi goes directly to that type.
     """
-    if case.baqi <= 0:
+
+    if case.baqi == 0:
         return case
 
     case.heads = _compute_heads(case)
     if case.heads == 0:
-        return case
+        return case # when would htis ever be @adam?
 
     # RUN INKISAAR STEP
 
@@ -381,7 +381,8 @@ def taseeb_step(case: Case) -> Case:
         case.ibnamm_liab["shares"] = case.ibnamm_liab.get("shares", 0) + case.baqi
     elif asib == "amm":
         case.amm["shares"] = case.amm.get("shares", 0) + case.baqi
-
+    case.ending = "taseeb"
+    
     return case
 
 
@@ -401,6 +402,8 @@ def awl_step(case: Case) -> Case:
             if heir.get("fard"):
                 heir["fard"] = heir["fard"] * awl_factor
 
+    case.ending = "awl"
+
     return case
 
 
@@ -410,8 +413,6 @@ def radd_step(case: Case) -> Case:
     When the total of fard shares is less than 1, the remaining (baqi)
     goes back to fard holders proportionally, INCLUDING spouses in this build - future functionality will allow for a choice of classic vs contemporary spousal treatment w/r radd (AA)
     """
-    if case.baqi <= 0:
-        return case
 
     radd_heirs = []
     radd_shares_total = 0
@@ -423,15 +424,14 @@ def radd_step(case: Case) -> Case:
         if shares:
             radd_heirs.append((name, heir, shares))
             radd_shares_total += shares
+        
 
     if not radd_heirs or radd_shares_total == 0:
-        if not case.asib:
-            for name in ("zawj", "zawja"):
-                heir = getattr(case, name)
-                if heir.get("shares", 0) > 0:
-                    heir["shares"] = heir.get("shares", 0) + case.baqi
-                    break
-        return case
+        for name in ("zawj", "zawja"):
+            heir = getattr(case, name)
+            if heir.get("shares", 0) > 0:
+                heir["shares"] = heir.get("shares", 0) + case.baqi
+                break
 
     if case.baqi % radd_shares_total != 0:
         old_raas = case.raas
@@ -468,5 +468,7 @@ def radd_step(case: Case) -> Case:
         current_shares = heir.get("shares", 0)
         heir["shares"] = current_shares + radd_portion
         total_radd_distributed += radd_portion
+
+    case.ending = "radd"
 
     return case
