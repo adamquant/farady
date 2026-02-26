@@ -61,8 +61,8 @@ import argparse
 import sys
 from collections.abc import Sequence
 
-from farady.classes import Case as InheritanceCase
-from farady.pipelines import calculate as InheritanceCalculator
+from farady.classes import Case
+from farady.pipelines import calculate_from_dict
 from farady.pipelines import _build_distribution
 from farady.processing import PRETTY_NAMES
 
@@ -386,8 +386,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 1
 
     # Create case and calculate
-    case = InheritanceCase.from_dict(provided_members)
-    result_case = InheritanceCalculator(case)
+    result_case = calculate_from_dict(provided_members)
 
     print_results(result_case, provided_members, args.verbose, args.debug)
 

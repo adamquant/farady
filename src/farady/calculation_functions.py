@@ -39,14 +39,22 @@ def _compute_heads(case: Case) -> int:
     return 1
 
 
-def inkisaar(case: Case, heads: int) -> Case:
+def inkisaar(case: Case) -> Case:
     """Adjust raas when baqi is not divisible by heads.
 
-    Finds LCM of current raas and heads, then recalculates all shares.
+    Tasheeh al-inkisaar
+
     """
-    old_raas = case.raas
-    new_raas = _lcm(old_raas, heads)
-    multiplier = new_raas // old_raas
+    import math
+
+    if math.gcd(case.heads, case.baqi) == 1:
+        new_raas = case.heads * case.raas
+        print(f'1. new raas issss {new_raas}')
+    else:
+        new_raas = math.gcd(case.heads, case.baqi) * case.raas
+        print(f'2. new raas issss {new_raas}')
+    
+    multiplier = new_raas // case.raas
 
     for heir in case._all_heirs:
         shares = heir.get("shares")
@@ -134,7 +142,7 @@ def usool_step(case: Case) -> Case:
         elif case.jadda.get("count"):
             case.jadda["fard"] = frac("1/6")
 
-    if not has_m_furoo:
+    if not case.has_m_furoo:
         if case.ab.get("count"):
             case.asib = "ab"
         elif case.jadd.get("count"):
@@ -301,18 +309,20 @@ def taseeb_step(case: Case) -> Case:
     if case.baqi <= 0:
         return case
 
-    heads = _compute_heads(case)
-    case.heads = heads
-
-    if heads == 0:
+    case.heads = _compute_heads(case)
+    print(f"heads ARREEEEEE: {case.heads}")
+    if case.heads == 0:
         return case
 
-    if case.baqi % heads != 0:
-        case = inkisaar(case, heads)
+    # RUN INKISAAR STEP
 
-    baqi = case.baqi
+    if case.baqi % case.heads != 0:
+        case = inkisaar(case)
+
+    print(case.baqi,case.heads, case.raas)
+
     asib = case.asib
-    taseeb_unit = baqi // heads
+    taseeb_unit = case.baqi // case.heads
 
     if asib == "ibn":
         case.ibn["shares"] = case.ibn.get("shares", 0) + baqi

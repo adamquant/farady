@@ -87,6 +87,39 @@ def calculate(case: Case) -> Case:
     """
     log_calculation_start(_logger, {"case": case.to_dict()})
 
+    # Validate umm (mother) - should not be more than 1
+    umm_count = case.umm.get('count', 0) if case.umm else 0
+    if not (case.umm is None or (isinstance(umm_count, (int, float)) and 0 <= umm_count <= 1)):
+        case.ending = "invalid_input"
+        case.status = "Failed"
+        return case
+    # Validate ab (father) - should not be more than 1
+    ab_count = case.ab.get('count', 0) if case.ab else 0
+    if not (case.ab is None or (isinstance(ab_count, (int, float)) and 0 <= ab_count <= 1)):
+        case.ending = "invalid_input"
+        case.status = "Failed"
+        return case
+    # Validate zawj (husband) - should not be more than 1
+    zawj_count = case.zawj.get('count', 0) if case.zawj else 0
+    if not (case.zawj is None or isinstance(zawj_count, bool) or 
+            (isinstance(zawj_count, (int, float)) and 0 <= zawj_count <= 1)):
+        case.ending = "invalid_input"
+        case.status = "Failed"
+        return case
+    # Validate zawja (wives) - should not be more than 4
+    zawja_count = case.zawja.get('count', 0) if case.zawja else 0
+    if not (case.zawja is None or isinstance(zawja_count, bool) or 
+            (isinstance(zawja_count, (int, float)) and 0 <= zawja_count <= 4)):
+        case.ending = "invalid_input"
+        case.status = "Failed"
+        return case
+    # Validate jadd (paternal grandfather) - should not be more than 1
+    jadd_count = case.jadd.get('count', 0) if case.jadd else 0
+    if not (case.jadd is None or (isinstance(jadd_count, (int, float)) and 0 <= jadd_count <= 1)):
+        case.ending = "invalid_input"
+        case.status = "Failed"
+        return case
+
     if case.is_umuriya:
         if case.is_umuriya1:
             case.zawj["fard"] = frac("3/6")
