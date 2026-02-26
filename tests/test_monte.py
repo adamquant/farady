@@ -164,7 +164,8 @@ def test_ibn_has_share_when_present():
         lambda r: (
             r["original_case"].get("ibn", 0) > 0
             and r["distribution"].get("ibn", 0) == 0
-            and r["ending"] == "taseeb" and r["status"] == "Complete"
+            and r["ending"] == "taseeb"
+            and r["status"] == "Complete"
         ),
     )
 
@@ -221,6 +222,75 @@ def test_ibn_has_share_when_present():
 #             f"{cat}: {count}" for cat, count in failure_counts.items() if count > 0
 #         )
 #         raise AssertionError(f"Negative shares found: {failure_details}")
+
+
+def test_unknown_status_should_fail():
+    """Test that fails if any case has 'Unknown' status in ordinary category.
+
+    This test will fail pytest if any case has 'Unknown' status, and will save
+    all such cases to a failure file for analysis.
+    """
+    results = get_test_results()
+
+    # Only check ordinary category for 'Unknown' status
+    unknown_failures = {
+        "ordinary": [
+            {"index": i, "case": c, "result": r}
+            for i, (c, r) in enumerate(results["ordinary"])
+            if r["status"] == "Unknown"
+        ]
+    }
+
+    # Save all 'Unknown' cases for analysis
+    if len(unknown_failures["ordinary"]) > 0:
+        save_failures(unknown_failures, "test_unknown_status_should_fail")
+        print(
+            f"Saved {len(unknown_failures['ordinary'])} 'Unknown' cases to failure file"
+        )
+
+        # Fail the test - we don't want any 'Unknown' cases
+        raise AssertionError(
+            f"Found {len(unknown_failures['ordinary'])} cases with 'Unknown' status"
+        )
+
+
+def test_other_non_complete_cases():
+    """Record all other non-complete cases (Failed, etc.) for ordinary category only.
+
+    This test will not fail pytest, but will save all other non-complete cases
+    to a failure file for analysis.
+    """
+    results = get_test_results()
+
+    # Only check ordinary category for non-'Complete' and non-'Unknown' cases
+    other_non_complete = {
+        "ordinary": [
+            {"index": i, "case": c, "result": r}
+            for i, (c, r) in enumerate(results["ordinary"])
+            if r["status"] != "Complete" and r["status"] != "Unknown"
+        ]
+    }
+
+    # Also collect 'Unknown' cases for comprehensive logging (but don't fail)
+    unknown_cases = {
+        "ordinary": [
+            {"index": i, "case": c, "result": r}
+            for i, (c, r) in enumerate(results["ordinary"])
+            if r["status"] == "Unknown"
+        ]
+    }
+
+    # Combine all non-complete cases for logging
+    all_non_complete = {
+        "ordinary": other_non_complete["ordinary"] + unknown_cases["ordinary"]
+    }
+
+    # Save all non-complete cases for analysis (only if there are any)
+    if len(all_non_complete["ordinary"]) > 0:
+        save_failures(all_non_complete, "test_other_non_complete_cases")
+        print(
+            f"Saved {len(all_non_complete['ordinary'])} other non-complete cases to failure file"
+        )
 
 
 def test_daughters_always_inherit():
