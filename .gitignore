@@ -87,3 +87,7 @@ src/farady/_version.py
 
 # Local agent instructions (not committed)
 AGENTS.md
+agents.md
+
+# Admin directory
+/admin
