@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-type HeirKey = str
+# Type alias (compatible with older Python versions)
+HeirKey = str
 
 PRETTY_NAMES: dict[HeirKey, str] = {
     "bint": "Daughter(s)",

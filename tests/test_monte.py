@@ -61,16 +61,53 @@ def case_to_result(case_dict):
     # Build distribution
     distribution = _build_distribution(case)
 
-    # Extract heir shares
-    numerators = {
-        name: int(heir.get("shares", 0))
-        for name, heir in zip(case._all_heir_names, case._all_heirs)
-        if heir.get("shares")
-    }
+    # Extract heir shares (already done above, removing duplicate)
+    # Create a detailed heir breakdown
+    heir_details = {}
+    for name, heir in zip(case._all_heir_names, case._all_heirs):
+        if heir.get("count", 0) > 0 or heir.get("shares", 0) > 0:
+            heir_details[name] = {
+                "count": heir.get("count", 0),
+                "shares": heir.get("shares", 0),
+                "fard": str(heir.get("fard", "")) if heir.get("fard") else None,
+                "asib": heir.get("asib", False),
+            }
+
+    # Create a more detailed string representation of the Case object
+    case_repr = f"Case("
+    heir_info = []
+    for name, heir in zip(case._all_heir_names, case._all_heirs):
+        if heir.get("count", 0) > 0 or heir.get("shares", 0) > 0:
+            heir_str = f"{name}={{'count': {heir.get('count', 0)}"
+            if heir.get("fard") is not None:
+                heir_str += f", 'fard': {heir['fard']}"
+            if heir.get("shares") is not None:
+                heir_str += f", 'shares': {heir['shares']}"
+            if heir.get("asib"):
+                heir_str += f", 'asib': {heir['asib']}"
+            heir_str += "}"
+            heir_info.append(heir_str)
+
+    attrs = []
+    if case.ending:
+        attrs.append(f"ending='{case.ending}'")
+    if case.asib:
+        attrs.append(f"asib='{case.asib}'")
+    if case.status:
+        attrs.append(f"status='{case.status}'")
+    if case.heads is not None:
+        attrs.append(f"heads={case.heads}")
+    if case._raas_override is not None:
+        attrs.append(f"_raas_override={case._raas_override}")
+    if case.total_shares_radd:
+        attrs.append(f"total_shares_radd={case.total_shares_radd}")
+
+    all_info = heir_info + attrs
+    case_repr += ", ".join(all_info) + ")" if all_info else ")"
 
     return {
         "original_case": case_dict,
-        "case": case,
+        "case_str": case_repr,  # String representation of the full Case object
         "distribution": distribution,
         "ending": case.ending,
         "asib": case.asib,
@@ -79,6 +116,9 @@ def case_to_result(case_dict):
         "total_shares": case.total_shares,
         "raas": case.raas,
         "numerators": numerators,
+        "heir_details": heir_details,  # Detailed breakdown of all heirs
+        "baqi": case.baqi,  # Remaining shares
+        "_raas_override": case._raas_override,
     }
 
 
@@ -87,7 +127,7 @@ def collect_all_results(limit=None):
 
     # Apply limit if specified
     if limit is None:
-        limit = int(os.environ.get("LIMIT", "100000"))
+        limit = int(os.environ.get("LIMIT", "10000"))
 
     results = {}
     for cat in CATEGORIES:
