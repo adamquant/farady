@@ -127,7 +127,7 @@ def collect_all_results(limit=None):
 
     # Apply limit if specified
     if limit is None:
-        limit = int(os.environ.get("LIMIT", "10000"))
+        limit = int(os.environ.get("LIMIT", "200000"))
 
     results = {}
     for cat in CATEGORIES:
