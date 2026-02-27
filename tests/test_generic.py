@@ -53,6 +53,6 @@ def test_lizakari4():
 
 def test_lizakari5():
     case = calculate_from_dict({"aliab": "1", "uliab": "1"})
-    assert case.ibn.get("aliab") == 2 * case.uliab.get("shares") 
+    assert case.aliab.get("shares") == 2 * case.uliab.get("shares") 
 
 

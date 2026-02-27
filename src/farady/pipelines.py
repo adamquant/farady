@@ -59,8 +59,7 @@ from farady.processing import (
 )
 
 from farady.classes import Case
-from farady.calculation_functions import (
-    convert_fard_to_shares,
+from farady.calculation_functions import (convert_fard_to_shares,
     zawjayn_step,
     kalala_step,
     usool_step,
@@ -68,8 +67,7 @@ from farady.calculation_functions import (
     hawashi_step,
     taseeb_step,
     awl_step,
-    radd_step,
-)
+    radd_step)
 
 _logger = get_logger(__name__)
 
@@ -86,7 +84,6 @@ def calculate(case: Case) -> Case:
         The same Case object with all calculation results populated
     """
     log_calculation_start(_logger, {"case": case.to_dict()})
-
 
     ###=== VALIDATION +++###
 
@@ -443,4 +440,6 @@ def calculate_from_dict(family_data: dict) -> Case:
         return case
 
     case = Case.from_dict(family_data)
+    
+    #distribution = _build_distribution(calculate(case))
     return calculate(case)

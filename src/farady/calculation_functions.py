@@ -18,14 +18,14 @@ def _compute_heads(case: Case) -> int:
     """
 
     if case.asib == "ibn-bint":
-        return case.ibn.get("count", 0) * 2 + case.bint.get("count", 0)
+        return (case.ibn.get("count", 0) * 2) + case.bint.get("count", 0)
     elif case.asib == "iibn-bibn":
-        return case.iibn.get("count", 0) * 2 + case.bibn.get("count", 0)
+        return (case.iibn.get("count", 0) * 2) + case.bibn.get("count", 0)
     elif case.asib == "iiibn-biibn":
-        return case.iiibn.get("count", 0) * 2 + case.biibn.get("count", 0)
+        return (case.iiibn.get("count", 0) * 2) + case.biibn.get("count", 0)
     elif case.asib == "iiibn-biibn-bibn":
         return (
-            case.iiibn.get("count", 0) * 2
+            (case.iiibn.get("count", 0) * 2)
             + case.biibn.get("count", 0)
             + case.bibn.get("count", 0)
         )
@@ -163,7 +163,7 @@ def furoo_step(case: Case) -> Case:
             case.bint["fard"] = frac(2, 3)
 
     if case.asib is None and (case.ibn.get("count", 0) or case.bibn.get("count", 0)):
-        if case.ibn.get("count", 0):
+        if case.iibn.get("count", 0):
             if not case.bibn.get("count", 0):
                 case.asib = "iibn"
             else:
@@ -390,7 +390,6 @@ def awl_step(case: Case) -> Case:
     case.ending = "awl"
 
     return case
-
 
 def radd_step(case: Case) -> Case:
     """Apply radd (return) when shares are less than 1.

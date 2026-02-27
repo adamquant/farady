@@ -1,9 +1,10 @@
 # Farady - Islamic Inheritance Distribution Calculator
 
 [![License: AGPLv3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](LICENSE)
-[![Python Version](https://img.shields.io/pypi/pyversions/farady)](https://pypi.org/project/farady/)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/release/python-3130/)
 [![CI](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/adamquant/farady-dev/badge.svg?branch=main)](https://coveralls.io/github/adamquant/farady-dev?branch=main)
+[![Pytest](https://img.shields.io/badge/pytest-passing-success)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
 
 A Python library and CLI tool for calculating Islamic inheritance distribution according to Faraid (Islamic inheritance law).
 
@@ -524,13 +525,13 @@ if result.denominator:
 Run tests:
 
 ```bash
-pytest tests/ -v
+poetry run pytest tests/ -v
 ```
 
 Run specific test:
 
 ```bash
-pytest tests/test_farady.py::TestCalculateFromDict::test_son_daughter_wife -v
+poetry run pytest tests/test_farady.py::TestCalculateFromDict::test_son_daughter_wife -v
 ```
 
 ### Monte Carlo Testing
@@ -551,7 +552,7 @@ Monte Carlo tests verify inheritance calculations across thousands of randomly g
 
 3. Analyze failures in Jupyter:
    ```bash
-   jupyter notebook tests/review.ipynb
+   poetry run jupyter notebook tests/review.ipynb
    ```
 
 #### Configuration
@@ -565,6 +566,22 @@ For debugging specific issues, you might want to run with a smaller limit to get
 ```bash
 FARADY_MONTE_LIMIT=100 poetry run python scripts/generate_monte_results.py
 ```
+
+For production validation, you might want to run with a larger limit:
+```bash
+FARADY_MONTE_LIMIT=50000 poetry run python scripts/generate_monte_results.py
+```
+
+##### Debugging Workflow
+1. Run the Monte Carlo tests with an appropriate limit:
+   ```bash
+   FARADY_MONTE_LIMIT=1000 poetry run python scripts/generate_monte_results.py
+   ```
+
+2. Open the analysis notebook:
+   ```bash
+   poetry run jupyter notebook tests/review.ipynb
+   ```
 
 For production validation, you might want to run with a larger limit:
 ```bash

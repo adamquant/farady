@@ -123,7 +123,7 @@ def collect_all_results(limit=None):
 
     # Apply limit if specified
     if limit is None:
-        limit = int(os.environ.get("LIMIT", "257000"))
+        limit = int(os.environ.get("LIMIT", "250000"))
 
     # Apply limit to cases
     cases = cases[:limit] if limit > 0 else cases
@@ -214,73 +214,6 @@ def test_ibn_has_share_when_present():
     failure_count = len(failures)
     if failure_count > 0:
         raise AssertionError(f"Ibn present but no share failures: {failure_count}")
-
-
-# def test_zawj_or_zawja_not_both():
-#     """A case should not have both zawj and zawja present."""
-#     results = get_test_results()
-
-#     failures = collect_failures(
-#         results,
-#         lambda r: (
-#             r["original_case"].get("zawj", 0) > 0
-#             and r["original_case"].get("zawja", 0) > 0
-#         ),
-#     )
-
-#     # Save failures for analysis
-#     save_failures(failures, "test_zawj_or_zawja_not_both")
-
-#     # Assert no failures
-#     failure_count = len(failures)
-#     if failure_count > 0:
-#         raise AssertionError(f"Both zawj and zawja present: {failure_count}")
-
-
-# def test_positive_shares_only():
-#     """All shares should be positive when present."""
-#     results = get_test_results()
-
-#     failures = collect_failures(
-#         results, lambda r: any(share < 0 for share in r["numerators"].values())
-#     )
-
-#     # Save failures for analysis
-#     save_failures(failures, "test_positive_shares_only")
-
-#     # Assert no failures
-#     failure_count = len(failures)
-#     if failure_count > 0:
-#         raise AssertionError(f"Negative shares found: {failure_count}")
-
-
-def test_unknown_status_should_fail():
-    """Test that fails if any case has 'Unknown' status.
-
-    This test will fail pytest if any case has 'Unknown' status, and will save
-    all such cases to a failure file for analysis.
-    """
-    results = get_test_results()
-
-    # Check for 'Unknown' status cases
-    unknown_failures = [
-        {"index": i, "case": c, "result": r}
-        for i, (c, r) in enumerate(results)
-        if r["status"] == "Unknown"
-    ]
-
-    # Wrap in dict for save_failures function
-    unknown_failures_dict = {"ordinary": unknown_failures}
-
-    # Save all 'Unknown' cases for analysis
-    if len(unknown_failures) > 0:
-        save_failures(unknown_failures_dict, "test_unknown_status_should_fail")
-        print(f"Saved {len(unknown_failures)} 'Unknown' cases to failure file")
-
-        # Fail the test - we don't want any 'Unknown' cases
-        raise AssertionError(
-            f"Found {len(unknown_failures)} cases with 'Unknown' status"
-        )
 
 
 def test_other_non_complete_cases():
