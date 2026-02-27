@@ -14,13 +14,11 @@ A Python library and CLI tool for calculating Islamic inheritance distribution a
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
   - [Core Classes](#core-classes)
-  - [Convenience Functions](#convenience-functions)
+  - [Main Functions](#main-functions)
   - [CSV/Batch Processing](#csvbatch-processing)
-- [InheritanceResult Fields](#inheritanceresult-fields)
-- [Input Parameters](#input-parameters)
+- [Case Fields](#case-fields)
 - [CLI Usage](#cli-usage)
 - [Examples](#examples)
-- [Development](#development)
 
 ---
 
@@ -44,14 +42,14 @@ pip install -e .
 from farady import calculate_from_dict
 
 # Simple case: 1 son, 1 daughter, wife
-result = calculate_from_dict({"ibn": 1, "bint": 1, "zawja": True})
+case = calculate_from_dict({"ibn": 1, "bint": 1, "zawja": True})
 
-print(result.distribution)   # {'zawja': 0.125, 'ibn': 0.5833, 'bint': 0.2917}
-print(result.ending)         # 'taseeb'
-print(result.total)          # 1.0
-print(result.denominator)    # 24
-print(result.status)         # 'Complete'
-print(result.asib)           # 'ibn-bint'
+# Access results
+print(case.distribution)   # {'zawja': 0.125, 'ibn': 0.5833, 'bint': 0.2917}
+print(case.ending)         # 'taseeb'
+print(case.total)          # 1.0
+print(case.status)         # 'Complete'
+print(case.asib)           # 'ibn-bint'
 ```
 
 ---
@@ -60,51 +58,91 @@ print(result.asib)           # 'ibn-bint'
 
 ### Core Classes
 
-#### `InheritanceCase`
+#### `Case`
 
 Data class representing a family configuration for inheritance calculation.
 
 ```python
-from farady import InheritanceCase
+from farady import Case
 
-case = InheritanceCase(
-    ibn=2,        # 2 sons
-    bint=1,       # 1 daughter
-    zawja=True,   # Wife present
-    umm=1,        # Mother present
-    ab=1,         # Father present
-)
+case = Case.from_dict({
+    "ibn": 2,        # 2 sons
+    "bint": 1,       # 1 daughter
+    "zawja": True,   # Wife present
+    "umm": 1,        # Mother present
+    "ab": 1,         # Father present
+})
 ```
+
+**Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `distribution` | `dict` | Heir -> share mapping |
+| `ending` | `str` | Distribution method used |
+| `asib` | `str` | Residual heir (if any) |
+| `total` | `float` | Total of all shares |
+| `status` | `str` | Calculation status |
+| `raas` | `int` | Total shares (denominator) |
+| `total_shares` | `int` | Sum of all allocated shares |
 
 **Class Methods:**
 
 | Method | Description |
 |--------|-------------|
-| `InheritanceCase(**kwargs)` | Create case with family member counts |
-| `InheritanceCase.from_dict(data)` | Create from dictionary (handles string conversion) |
+| `Case.from_dict(data)` | Create from dictionary (handles string conversion) |
 | `case.to_dict()` | Convert to dictionary (excludes zero/false values) |
-
-#### `InheritanceCalculator`
-
-Calculator class that processes inheritance cases.
-
-```python
-from farady import InheritanceCase, InheritanceCalculator
-
-case = InheritanceCase(ibn=2, bint=1, zawja=True)
-calculator = InheritanceCalculator()
-result = calculator.calculate(case)
-```
-
-**Methods:**
-
-| Method | Parameters | Returns |
-|--------|------------|---------|
-| `calculate(case)` | `InheritanceCase` | `InheritanceResult` |
 
 ---
 
-### Convenience Functions
+### Main Functions
+
+#### `calculate(case)`
+
+Main function to calculate inheritance distribution.
+
+```python
+from farady import Case, calculate
+
+case = Case.from_dict({"ibn": 2, "bint": 1, "zawja": True})
+result = calculate(case)
+```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `case` | `Case` | Case object with family member counts |
+
+**Returns:** `Case` with populated results
+
+#### `calculate_from_dict(data)`
+
+Calculate inheritance from a dictionary. Useful for loading from JSON, CSV, or form data.
+
+```python
+from farady import calculate_from_dict
+
+# From a dictionary
+data = {"ibn": "2", "bint": "1", "zawja": "True"}  # Strings are converted
+case = calculate_from_dict(data)
+
+# From form data with mixed types
+data = {"ibn": 1, "bint": 2, "zawja": True, "umm": "1"}
+case = calculate_from_dict(data)
+```
+
+**String Conversion Rules:**
+
+| Field Type | String Value | Converted To |
+|------------|--------------|--------------|
+| Spouse (`zawj`, `zawja`) | `"True"`, `"1"`, `"yes"` | `True` |
+| Spouse (`zawj`, `zawja`) | `"False"`, `"0"`, `"no"`, `""` | `False` |
+| Count fields | `"1"`, `"2"`, etc. | `int` |
+| Count fields | `"True"`, `"yes"` | `1` |
+| Count fields | `"False"`, `"no"`, `""` | (excluded) |
+
+**Returns:** `Case` with populated results
 
 #### `calculate_inheritance(**kwargs)`
 
@@ -113,8 +151,10 @@ Calculate inheritance directly from keyword arguments.
 ```python
 from farady import calculate_inheritance
 
-result = calculate_inheritance(ibn=2, bint=1, zawja=True)
+case = calculate_inheritance(ibn=2, bint=1, zawja=True)
 ```
+
+**Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -139,37 +179,7 @@ result = calculate_inheritance(ibn=2, bint=1, zawja=True)
 | `zawj` | `bool` | Husband present |
 | `zawja` | `bool` | Wife present |
 
-**Returns:** `InheritanceResult`
-
----
-
-#### `calculate_from_dict(data)`
-
-Calculate inheritance from a dictionary. Useful for loading from JSON, CSV, or form data.
-
-```python
-from farady import calculate_from_dict
-
-# From a dictionary
-data = {"ibn": "2", "bint": "1", "zawja": "True"}  # Strings are converted
-result = calculate_from_dict(data)
-
-# From form data with mixed types
-data = {"ibn": 1, "bint": 2, "zawja": True, "umm": "1"}
-result = calculate_from_dict(data)
-```
-
-**String Conversion Rules:**
-
-| Field Type | String Value | Converted To |
-|------------|--------------|--------------|
-| Spouse (`zawj`, `zawja`) | `"True"`, `"1"`, `"yes"` | `True` |
-| Spouse (`zawj`, `zawja`) | `"False"`, `"0"`, `"no"`, `""` | `False` |
-| Count fields | `"1"`, `"2"`, etc. | `int` |
-| Count fields | `"True"`, `"yes"` | `1` |
-| Count fields | `"False"`, `"no"`, `""` | (excluded) |
-
-**Returns:** `InheritanceResult`
+**Returns:** `Case` with populated results
 
 ---
 
@@ -183,7 +193,7 @@ Load inheritance cases from a CSV file.
 from farady import load_csv_cases
 
 cases = load_csv_cases("tests/test_cases.csv")
-# Returns: List[InheritanceCase]
+# Returns: List[Case]
 
 for case in cases:
     print(case.to_dict())
@@ -202,9 +212,7 @@ ibn,bint,zawja,expected_total,notes
 - Extra columns (like `notes`, `expected_total`) are ignored
 - String values are converted using same rules as `from_dict()`
 
-**Returns:** `List[InheritanceCase]`
-
----
+**Returns:** `List[Case]`
 
 #### `process_csv_results(csv_path)`
 
@@ -217,8 +225,8 @@ results = process_csv_results("tests/test_cases.csv")
 
 for item in results:
     row = item["row_data"]       # Original CSV row (dict)
-    case = item["case"]           # InheritanceCase object
-    result = item["result"]       # InheritanceResult object
+    case = item["case"]          # Case object (before calculation)
+    result = item["result"]      # Case object (after calculation)
     
     print(f"Case: {row.get('notes')}")
     print(f"  Distribution: {result.distribution}")
@@ -232,131 +240,12 @@ for item in results:
 | Key | Type | Description |
 |-----|------|-------------|
 | `row_data` | `dict` | Original CSV row data |
-| `case` | `InheritanceCase` | Parsed case object |
-| `result` | `InheritanceResult` | Calculation result |
+| `case` | `Case` | Parsed case object |
+| `result` | `Case` | Calculated result case |
 
 ---
 
-## InheritanceResult Fields
-
-The `InheritanceResult` dataclass is returned by all calculation functions.
-
-```python
-@dataclass
-class InheritanceResult:
-    distribution: dict              # Heir -> share mapping
-    ending: Optional[str]           # Distribution method used
-    asib: Optional[str]             # Residual heir (if any)
-    total: float                    # Total of all shares
-    status: str                     # Calculation status
-    denominator: Optional[int]      # Total shares (raas)
-    numerators: dict                # Heir -> numerator (share count)
-```
-
-### Field Details
-
-#### `distribution: Dict[str, float]`
-
-Dictionary mapping heir names (Arabic) to their fractional shares.
-
-```python
-result.distribution
-# {'zawja': 0.125, 'ibn': 0.5833, 'bint': 0.2917}
-```
-
-#### `ending: Optional[str]`
-
-Describes how the distribution was finalized. Useful for debugging and understanding the calculation path.
-
-| Value | Description |
-|-------|-------------|
-| `"taseeb"` | Residual inheritance - remaining went to 'asib (residual heirs) |
-| `"awl"` | Reduction - total exceeded 1, shares were reduced proportionally |
-| `"radd"` | Return - there was leftover after fixed shares, returned to heirs |
-| `"umuriya1"` | Special case: father + mother + wife |
-| `"umuriya2"` | Special case: father + mother + husband |
-| `"mushtaraka"` | Special case: spouse + siblings sharing |
-| `"No valid heirs."` | No heirs found |
-| `None` | Not determined |
-
-```python
-result.ending  # 'taseeb'
-```
-
-#### `asib: Optional[str]`
-
-The residual heir ('aasib) who receives remaining shares after fixed portions.
-
-```python
-result.asib  # 'ibn-bint' means sons/daughters are residual heirs
-```
-
-#### `total: float`
-
-Sum of all distributed shares. Should be 1.0 for complete cases, may differ for awl cases.
-
-```python
-result.total  # 1.0
-```
-
-#### `status: str`
-
-| Value | Description |
-|-------|-------------|
-| `"Complete"` | Successfully distributed to 1.0 |
-| `"Failed"` | No valid heirs found |
-| `"Unknown"` | Distribution incomplete or unusual |
-
-```python
-result.status  # 'Complete'
-```
-
-#### `denominator: Optional[int]`
-
-The total number of shares (raas) for this inheritance case. Used to express shares as "X out of N" fractions.
-
-```python
-result.denominator  # 24
-
-# For will documents:
-# "Divide estate into 24 shares: 3 to Wife, 14 to Son(s), 7 to Daughter(s)"
-```
-
-#### `numerators: Dict[str, int]`
-
-Dictionary mapping heir names to their share count (numerator). Combined with `denominator`, gives exact fractions.
-
-```python
-result.numerators
-# {'zawja': 3, 'ibn': 14, 'bint': 7}
-
-# Combined with denominator (24):
-# Wife: 3/24, Son(s): 14/24, Daughter(s): 7/24
-```
-
-### Result Methods
-
-#### `to_pretty_dict() -> Dict[str, float]`
-
-Convert distribution to human-readable names.
-
-```python
-result.to_pretty_dict()
-# {'Wife': 0.125, 'Son(s)': 0.5833, 'Daughter(s)': 0.2917}
-```
-
-#### `get_member_fraction(member: str) -> Optional[float]`
-
-Get share for a specific heir.
-
-```python
-result.get_member_fraction("ibn")    # 0.5833
-result.get_member_fraction("zawja")  # 0.125
-```
-
----
-
-## Input Parameters
+## Case Fields
 
 ### Family Member Fields (Arabic Names)
 
@@ -400,13 +289,13 @@ PRETTY_NAMES = {
     'ab': 'Father',
     'jadd': 'Grandfather (nearest in relation)',
     'lium': 'Maternal Half-sibling(s)',
-    'shaqiqa': 'Full-sister(s)',
-    'shaqiq': 'Full-brother(s)',
+    'shaqiqa': 'Full Sister(s)',
+    'shaqiq': 'Full Brother(s)',
     'uliab': 'Paternal Half-sister(s)',
     'aliab': 'Paternal Half-brother(s)',
-    'ibnamm_sh': 'Full-nephew(s)',
-    'ibnamm_liab': 'Half-nephew(s)',
-    'amm': 'Uncle(s)',
+    'ibnamm_sh': 'Full Nephew',
+    'ibnamm_liab': 'Half Nephew',
+    'amm': 'Uncle',
     'zawj': 'Husband',
     'zawja': 'Wife',
 }
@@ -436,16 +325,16 @@ farady --ibn 1 --bint 2 --iibn 0 --bibn 0 --umm 1 --ab 1 --zawja
 ```python
 from farady import calculate_from_dict
 
-result = calculate_from_dict({"ibn": 1, "bint": 1, "zawja": True})
+case = calculate_from_dict({"ibn": 1, "bint": 1, "zawja": True})
 
-print(f"Distribution: {result.distribution}")
+print(f"Distribution: {case.distribution}")
 # Distribution: {'zawja': 0.125, 'ibn': 0.5833, 'bint': 0.2917}
 
-print(f"Ending: {result.ending}")
+print(f"Ending: {case.ending}")
 # Ending: taseeb
 
-print(f"Denominator: {result.denominator}")
-# Denominator: 24
+print(f"Raas: {case.raas}")
+# Raas: 24
 
 # For document generation:
 # "Divide into 24 shares: 3 to Wife, 14 to Son(s), 7 to Daughter(s)"
@@ -454,20 +343,20 @@ print(f"Denominator: {result.denominator}")
 ### Example 2: Awl Case (Shares Exceed 1)
 
 ```python
-result = calculate_from_dict({"bint": 2, "zawja": True})
+case = calculate_from_dict({"bint": 2, "zawja": True})
 
-print(f"Total: {result.total}")       # 1.125 (exceeds 1)
-print(f"Ending: {result.ending}")     # None (awl detected but not labeled)
+print(f"Total: {case.total}")       # 1.125 (exceeds 1)
+print(f"Ending: {case.ending}")     # awl
 ```
 
 ### Example 3: Radd Case (Leftover After Fixed Shares)
 
 ```python
-result = calculate_from_dict({"bint": 2})
+case = calculate_from_dict({"bint": 2})
 
-print(f"Distribution: {result.distribution}")  # {'bint': 1.0}
-print(f"Total: {result.total}")                # 1.0
-print(f"Ending: {result.ending}")              # 'taseeb'
+print(f"Distribution: {case.distribution}")  # {'bint': 1.0}
+print(f"Total: {case.total}")                # 1.0
+print(f"Ending: {case.ending}")              # radd
 # Two daughters: 2/3 fixed, remaining 1/3 returned via radd
 ```
 
@@ -505,335 +394,18 @@ form_data = {
     "umm": "1",
 }
 
-result = calculate_from_dict(form_data)
+case = calculate_from_dict(form_data)
 
-# Use denominator for will document
-if result.denominator:
+# Use raas for will document
+if case.raas:
     shares_text = []
-    for heir, share in result.distribution.items():
-        num_shares = round(share * result.denominator)
+    for heir, share in case.distribution.items():
+        num_shares = round(share * case.raas)
         shares_text.append(f"{num_shares} shares to {heir}")
     
-    print(f"Divide into {result.denominator} shares:")
+    print(f"Divide into {case.raas} shares:")
     print("\n".join(shares_text))
 ```
-
----
-
-## Development
-
-Run tests:
-
-```bash
-poetry run pytest tests/ -v
-```
-
-Run specific test:
-
-```bash
-poetry run pytest tests/test_farady.py::TestCalculateFromDict::test_son_daughter_wife -v
-```
-
-### Monte Carlo Testing
-
-Monte Carlo tests verify inheritance calculations across thousands of randomly generated cases. The improved testing infrastructure includes:
-
-#### Quick Start
-
-1. Run the Monte Carlo tests:
-   ```bash
-   poetry run python scripts/generate_monte_results.py
-   ```
-
-2. Customize the number of test cases (default is 1000 for faster iteration):
-   ```bash
-   FARADY_MONTE_LIMIT=5000 poetry run python scripts/generate_monte_results.py
-   ```
-
-3. Analyze failures in Jupyter:
-   ```bash
-   poetry run jupyter notebook tests/review.ipynb
-   ```
-
-#### Configuration
-
-The number of test cases can be configured using the `FARADY_MONTE_LIMIT` environment variable:
-- Default: 1000 cases (faster iteration during development)
-- To run more comprehensive tests: `FARADY_MONTE_LIMIT=10000`
-- To run fewer cases for quick testing: `FARADY_MONTE_LIMIT=100`
-
-For debugging specific issues, you might want to run with a smaller limit to get faster feedback:
-```bash
-FARADY_MONTE_LIMIT=100 poetry run python scripts/generate_monte_results.py
-```
-
-For production validation, you might want to run with a larger limit:
-```bash
-FARADY_MONTE_LIMIT=50000 poetry run python scripts/generate_monte_results.py
-```
-
-##### Debugging Workflow
-1. Run the Monte Carlo tests with an appropriate limit:
-   ```bash
-   FARADY_MONTE_LIMIT=1000 poetry run python scripts/generate_monte_results.py
-   ```
-
-2. Open the analysis notebook:
-   ```bash
-   poetry run jupyter notebook tests/review.ipynb
-   ```
-
-For production validation, you might want to run with a larger limit:
-```bash
-FARADY_MONTE_LIMIT=50000 poetry run python scripts/generate_monte_results.py
-```
-
-#### Analysis Tools
-
-The `tests/review.ipynb` notebook provides powerful querying and debugging capabilities:
-
-##### Loading and Setup
-When you open the notebook, the first cell automatically loads all failure reports and creates DataFrames for analysis. It will show you:
-- Which failure reports were loaded
-- How many failures exist for each test
-- Available DataFrames for querying (`master_df` for all tests, plus individual test DataFrames)
-
-##### Querying Failures
-The notebook provides several helper functions for filtering and analyzing failures:
-
-- `get_failure_summary(df)`: Get a summary of failures by test and category
-- `filter_by_heir(df, heir_name)`: Filter failures that involve a specific heir
-- `filter_by_status(df, status)`: Filter failures by calculation status
-- `filter_by_ending(df, ending)`: Filter failures by calculation ending
-- `filter_by_total_range(df, min_total, max_total)`: Filter by total distribution range
-- `find_similar_cases(df, case_pattern)`: Find cases matching a pattern dictionary
-- `sample_failures(df, n)`: Get a random sample of failures for quick inspection
-
-##### Detailed Inspection
-Use `inspect_case(df, index)` to examine a specific failure case in detail:
-- View the complete input case parameters
-- See the calculation result including distribution, total, status, and denominators
-- Examine individual heir shares and numerators
-
-##### Debugging Workflow
-1. Run the Monte Carlo tests with an appropriate limit:
-   ```bash
-   FARADY_MONTE_LIMIT=1000 poetry run python scripts/generate_monte_results.py
-   ```
-
-2. Open the analysis notebook:
-   ```bash
-   jupyter notebook tests/review.ipynb
-   ```
-
-3. Run the first cell to load all failure data
-
-4. Use the helper functions to narrow down to specific types of failures:
-   ```python
-   # Find all failures involving spouses
-   spouse_failures = filter_by_heir(master_df, 'zawj')
-   get_failure_summary(spouse_failures)
-   
-   # Look at incomplete calculations
-   incomplete = filter_by_status(master_df, 'Incomplete')
-   sample_incomplete = sample_failures(incomplete, 3)
-   for i in range(len(sample_incomplete)):
-       inspect_case(sample_incomplete, i)
-       print("-" * 50)
-   ```
-
-5. For detailed analysis of a specific case, use `inspect_case()` with the index of interest
-
-#### Manual Inspection and Pattern Recognition
-
-The notebook makes it easy to identify patterns in failures:
-- Use `find_similar_cases()` to locate cases with similar input parameters
-- Filter by specific heirs, statuses, or calculation endings
-- Sample random failures to get a broad view of issues
-- Compare distributions and totals to identify calculation anomalies
-
-This makes it much easier to debug edge cases and improve the calculation engine.
-
----
-
-## Branching Model
-
-This project uses a **hybrid branching model** combining:
-
-1. **Trunk-Based Development (TBD)** for core module development
-2. **Gitflow** for production releases to SunnaAssets
-
-### Branch Architecture Diagram
-
-```mermaid
-flowchart TB
-    subgraph FARADY_DEV["FARADY-DEV (adamquant)"]
-        direction TB
-        
-        MAIN["main<br/>(Development Trunk)"]
-        RELEASE_SA["release-sa<br/>(Pre-release Staging)"]
-        PROD_SA["prod-sa<br/>(Production Trigger)"]
-        
-        subgraph FEATURES["Feature Branches (TBD)"]
-            FB1["feat/feature-name"]
-            FB2["fix/bug-fix"]
-            FB3["docs/documentation"]
-        end
-        
-        MAIN --force push--> RELEASE_SA
-        RELEASE_SA --PR only--> PROD_SA
-        
-        FEATURES --PR merge--> MAIN
-        
-        subgraph TESTS_MAIN["Tests on main"]
-            UT1["Unit Tests"]
-        end
-        
-        subgraph TESTS_RELEASE["Tests on release-sa"]
-            UT2["Unit Tests"]
-            CT["Contract Tests"]
-            E2E["E2E Tests"]
-        end
-        
-        subgraph PROD_ACTIONS["On merge to prod-sa"]
-            TAG["Create Tag<br/>vX.Y.Z-sa.N"]
-            DISPATCH["repository_dispatch<br/>to sunnaassets"]
-        end
-    end
-    
-    MAIN --> TESTS_MAIN
-    RELEASE_SA --> TESTS_RELEASE
-    PROD_SA --> PROD_ACTIONS
-    
-    subgraph SUNNAASSETS["SUNNAASSETS REPOS"]
-        direction TB
-        
-        subgraph FREE_EST["sunnaassets/free-estimate"]
-            FE_MAIN["main"]
-            FE_RELEASE["release/{version}"]
-            FE_LAMBDA["Lambda: sa_free_report"]
-            
-            FE_RELEASE --smoke tests--> FE_LAMBDA
-            FE_RELEASE --PR if pass--> FE_MAIN
-            FE_MAIN --deploy--> FE_LAMBDA
-        end
-        
-        subgraph ONEWASIYA["sunnaassets/onewasiya"]
-            OW_MAIN["main"]
-            OW_RELEASE["release/{version}"]
-            OW_LAMBDA["Lambda: one-wasiya"]
-            
-            OW_RELEASE --smoke tests--> OW_LAMBDA
-            OW_RELEASE --PR if pass--> OW_MAIN
-            OW_MAIN --deploy--> OW_LAMBDA
-        end
-    end
-    
-    DISPATCH --> FREE_EST & ONEWASIYA
-    
-    DISPATCH -.->|"1. Create release/{ver}"| FE_RELEASE
-    DISPATCH -.->|"2. Bump farady version"| FE_RELEASE
-    DISPATCH -.->|"3. Run smoke tests"| FE_RELEASE
-    
-    DISPATCH -.->|"1. Create release/{ver}"| OW_RELEASE
-    DISPATCH -.->|"2. Bump farady version"| OW_RELEASE
-    DISPATCH -.->|"3. Run smoke tests"| OW_RELEASE
-
-    %% Styling
-    classDef primary fill:#e8f5e9,stroke:#1b5e20,stroke-width:3px
-    classDef staging fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    classDef production fill:#fce4ec,stroke:#880e4f,stroke-width:3px
-    classDef feature fill:#e3f2fd,stroke:#1565c0,stroke-width:1px
-    classDef test fill:#f3e5f5,stroke:#4a148c,stroke-width:1px
-    classDef action fill:#fff8e1,stroke:#f57f17,stroke-width:2px
-    classDef external fill:#eceff1,stroke:#455a64,stroke-width:2px
-    
-    class MAIN primary
-    class RELEASE_SA staging
-    class PROD_SA production
-    class FB1,FB2,FB3 feature
-    class TESTS_MAIN,TESTS_RELEASE,UT1,UT2,CT,E2E test
-    class TAG,DISPATCH action
-    class FREE_EST,ONEWASIYA,FE_MAIN,OW_MAIN,FE_RELEASE,OW_RELEASE,FE_LAMBDA,OW_LAMBDA external
-```
-
-### Branch Roles
-
-| Repo | Branch | Role |
-|------|--------|------|
-| farady-dev | `main` | Development trunk (TBD) |
-| farady-dev | `release-sa` | Pre-release staging (no infra tests) |
-| farady-dev | `prod-sa` | Production trigger, dispatches to SA |
-| sunnaassets/* | `main` | Production, deploys Lambda |
-| sunnaassets/* | `release/{version}` | Auto-created per release, smoke tests run here |
-
-### Release Workflow
-
-1. **Develop on `main`** using TBD (feature branches → PR → merge)
-2. **Stage release** by force pushing to `release-sa`:
-   ```bash
-   git push origin main:release-sa --force
-   ```
-3. **Tests run on farady-dev** - Unit, contract, and E2E tests (no AWS access needed)
-4. **Create PR** from `release-sa` to `prod-sa`
-5. **Merge triggers**:
-   - Version tag created automatically in farady-dev
-   - `repository_dispatch` sent to sunnaassets repos
-   - Each sunnaassets repo:
-     - Creates `release/{version}` branch
-     - Updates requirements.txt with new farady version
-     - Runs smoke tests against deployed Lambda
-     - If pass: creates PR to main (manual merge required)
-     - If fail: creates issue with `release-failed` label
-
-### Versioning
-
-Releases to SunnaAssets use the format `vX.Y.Z-sa.N`:
-
-- `X.Y.Z` = Semantic version (major.minor.patch)
-- `sa` = SunnaAssets release identifier
-- `N` = Release number for that version
-
-Examples: `v0.1.0-sa.1`, `v0.1.0-sa.2`, `v0.2.0-sa.1`
-
-### Version Management
-
-Use the version script for bumping:
-
-```bash
-python scripts/version.py current           # Show current version
-python scripts/version.py bump minor        # Bump minor version
-python scripts/version.py bump major        # Bump major version
-python scripts/version.py tag               # Create SA release tag
-```
-
----
-
-## Schools of Thought (Madhahib)
-
-### Current Implementation (v0.1.0)
-
-This version implements a simplified approach to Islamic inheritance that does not yet support toggling between the four madhahib (schools of thought). The following rules are currently hardcoded:
-
-1. **Siblings blocked by father/grandfather**: All siblings (full, paternal half, and maternal half) are completely blocked from inheritance when a father or grandfather is present. This follows the majority opinion.
-
-2. **Radd to spouse when alone**: If no blood relatives are present to receive the excess (radd), the remainder is allocated to the surviving spouse. This is a contemporary practice adopted by some scholars and is not universally accepted across all madhahib.
-
-### Planned: Madhahib Toggle (v0.2.0)
-
-A future release will introduce configuration options to toggle between different schools of thought, including:
-
-- Hanafi
-- Maliki  
-- Shafi'i
-- Hanbali
-
-This will affect rulings on:
-- Grandfather vs siblings competition
-- Radd distribution rules
-- Special cases (mushtaraka, umuriya)
-
-See issue [#20](https://github.com/adamquant/farady-dev/issues/20) for progress on this feature.
 
 ---
 
