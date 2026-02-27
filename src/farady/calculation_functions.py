@@ -16,23 +16,22 @@ def _compute_heads(case: Case) -> int:
     For mixed male/female asibs (lizakari): males=2, females=1.
     For single-type asibs: return 1 (treating at type level).
     """
-    asib = case.asib
 
-    if asib == "ibn-bint":
+    if case.asib == "ibn-bint":
         return case.ibn.get("count", 0) * 2 + case.bint.get("count", 0)
-    elif asib == "iibn-bibn":
+    elif case.asib == "iibn-bibn":
         return case.iibn.get("count", 0) * 2 + case.bibn.get("count", 0)
-    elif asib == "iiibn-biibn":
+    elif case.asib == "iiibn-biibn":
         return case.iiibn.get("count", 0) * 2 + case.biibn.get("count", 0)
-    elif asib == "iiibn-biibn-bibn":
+    elif case.asib == "iiibn-biibn-bibn":
         return (
             case.iiibn.get("count", 0) * 2
             + case.biibn.get("count", 0)
             + case.bibn.get("count", 0)
         )
-    elif asib == "shaqiq-shaqiqa":
+    elif case.asib == "shaqiq-shaqiqa":
         return case.shaqiq.get("count", 0) * 2 + case.shaqiqa.get("count", 0)
-    elif asib == "aliab-uliab":
+    elif case.asib == "aliab-uliab":
         return case.aliab.get("count", 0) * 2 + case.uliab.get("count", 0)
 
     return 1
@@ -160,10 +159,9 @@ def furoo_step(case: Case) -> Case:
     elif not case.ibn.get("count", 0) and case.bint.get("count", 0):
         if case.bint.get("count", 0) == 1:
             case.bint["fard"] = frac(1, 2)
-            case.is_bint_taking_half = True
         else:
             case.bint["fard"] = frac(2, 3)
-            
+
     if case.asib is None and (case.ibn.get("count", 0) or case.bibn.get("count", 0)):
         if case.ibn.get("count", 0):
             if not case.bibn.get("count", 0):
@@ -172,14 +170,13 @@ def furoo_step(case: Case) -> Case:
                 case.asib = "iibn-bibn"
         elif case.bibn.get("count", 0) and case.is_bint_taking_half:
             case.bibn["fard"] = frac(1, 6)
-            case.is_bint_taking_twothirds = True
+
         elif case.bibn.get("count", 0) and not (case.is_bint_taking_half or case.is_bint_taking_twothirds):
             if case.bibn.get("count", 0) == 1:
                 case.bibn["fard"] = frac(1, 2)
-                case.is_bint_taking_half = True
             else:
                 case.bibn["fard"] = frac(2, 3)
-                case.is_bint_taking_twothirds = True
+
         elif case.is_bint_taking_twothirds and case.bibn.get("count", 0):
             pass
 
@@ -195,7 +192,7 @@ def furoo_step(case: Case) -> Case:
                 case.asib = "iiibn-biibn-bibn"
         elif case.biibn.get("count", 0) and case.is_bint_taking_half and not case.is_bint_taking_twothirds:
             case.biibn["fard"] = frac(1, 6)
-            case.is_bint_taking_twothirds = True
+
         elif case.biibn.get("count", 0) and not (case.is_bint_taking_twothirds or case.is_bint_taking_half):
             if case.biibn.get("count", 0) == 1:
                 case.biibn["fard"] = frac(1, 2)
@@ -221,14 +218,13 @@ def hawashi_step(case: Case) -> Case:
     elif not case.shaqiq.get("count", 0) and case.shaqiqa.get("count", 0) and not case.has_any_furoo:
         if case.shaqiqa.get("count", 0) == 1:
             case.shaqiqa["fard"] = frac("1/2")
-            case.is_shaqiqa_taking_half = True
         elif case.shaqiqa.get("count", 0) > 1:
             case.shaqiqa["fard"] = frac("2/3")
-            case.is_shaqiqa_taking_twothirds = True 
+
     elif (
         case.asib is None
         and case.shaqiqa.get("count", 0)
-        and (case.is_bint_taking_half or case.is_bint_taking_twothirds) # @adam double check these
+        and (case.is_bint_taking_half or case.is_bint_taking_twothirds)
     ):
         case.asib = "shaqiqa"
 
@@ -266,11 +262,13 @@ def hawashi_step(case: Case) -> Case:
             ):
                 case.uliab["fard"] = frac(1, 2) if case.uliab.get("count", 0) == 1 else frac(2, 3)
 
-    if case.asib_present and case.asib is None:
+    if case.asib is None:
         if case.ibnamm_sh.get("count"):
             case.asib = "ibnamm_sh"
+        
         elif case.ibnamm_liab.get("count"):
             case.asib = "ibnamm_liab"
+        
         elif case.amm.get("count"):
             case.asib = "amm"
 
@@ -297,37 +295,36 @@ def taseeb_step(case: Case) -> Case:
     if case.baqi % case.heads != 0:
         case = inkisaar(case)
 
-    asib = case.asib
     taseeb_unit = case.baqi // case.heads
 
-    if asib == "ibn":
+    if case.asib == "ibn":
         case.ibn["shares"] = case.ibn.get("shares", 0) + case.baqi
-    elif asib == "iibn":
+    elif case.asib == "iibn":
         case.iibn["shares"] = case.iibn.get("shares", 0) + case.baqi
-    elif asib == "iiibn":
+    elif case.asib == "iiibn":
         case.iiibn["shares"] = case.iiibn.get("shares", 0) + case.baqi
-    elif asib == "ibn-bint":
+    elif case.asib == "ibn-bint":
         case.ibn["shares"] = (
             case.ibn.get("shares", 0) + case.ibn.get("count", 0) * 2 * taseeb_unit
         )
         case.bint["shares"] = (
             case.bint.get("shares", 0) + case.bint.get("count", 0) * taseeb_unit
         )
-    elif asib == "iibn-bibn":
+    elif case.asib == "iibn-bibn":
         case.iibn["shares"] = (
             case.iibn.get("shares", 0) + case.iibn.get("count", 0) * 2 * taseeb_unit
         )
         case.bibn["shares"] = (
             case.bibn.get("shares", 0) + case.bibn.get("count", 0) * taseeb_unit
         )
-    elif asib == "iiibn-biibn":
+    elif case.asib == "iiibn-biibn":
         case.iiibn["shares"] = (
             case.iiibn.get("shares", 0) + case.iiibn.get("count", 0) * 2 * taseeb_unit
         )
         case.biibn["shares"] = (
             case.biibn.get("shares", 0) + case.biibn.get("count", 0) * taseeb_unit
         )
-    elif asib == "iiibn-biibn-bibn":
+    elif case.asib == "iiibn-biibn-bibn":
         case.iiibn["shares"] = (
             case.iiibn.get("shares", 0) + case.iiibn.get("count", 0) * 2 * taseeb_unit
         )
@@ -337,37 +334,37 @@ def taseeb_step(case: Case) -> Case:
         case.bibn["shares"] = (
             case.bibn.get("shares", 0) + case.bibn.get("count", 0) * taseeb_unit
         )
-    elif asib == "ab":
+    elif case.asib == "ab":
         case.ab["shares"] = case.ab.get("shares", 0) + case.baqi
-    elif asib == "jadd":
+    elif case.asib == "jadd":
         case.jadd["shares"] = case.jadd.get("shares", 0) + case.baqi
-    elif asib == "shaqiq":
+    elif case.asib == "shaqiq":
         case.shaqiq["shares"] = case.shaqiq.get("shares", 0) + case.baqi
-    elif asib == "shaqiqa":
+    elif case.asib == "shaqiqa":
         case.shaqiqa["shares"] = case.shaqiqa.get("shares", 0) + case.baqi
-    elif asib == "shaqiq-shaqiqa":
+    elif case.asib == "shaqiq-shaqiqa":
         case.shaqiq["shares"] = (
             case.shaqiq.get("shares", 0) + case.shaqiq.get("count", 0) * 2 * taseeb_unit
         )
         case.shaqiqa["shares"] = (
             case.shaqiqa.get("shares", 0) + case.shaqiqa.get("count", 0) * taseeb_unit
         )
-    elif asib == "aliab":
+    elif case.asib == "aliab":
         case.aliab["shares"] = case.aliab.get("shares", 0) + case.baqi
-    elif asib == "uliab":
+    elif case.asib == "uliab":
         case.uliab["shares"] = case.uliab.get("shares", 0) + case.baqi
-    elif asib == "aliab-uliab":
+    elif case.asib == "aliab-uliab":
         case.aliab["shares"] = (
             case.aliab.get("shares", 0) + case.aliab.get("count", 0) * 2 * taseeb_unit
         )
         case.uliab["shares"] = (
             case.uliab.get("shares", 0) + case.uliab.get("count", 0) * taseeb_unit
         )
-    elif asib == "ibnamm_sh":
+    elif case.asib == "ibnamm_sh":
         case.ibnamm_sh["shares"] = case.ibnamm_sh.get("shares", 0) + case.baqi
-    elif asib == "ibnamm_liab":
+    elif case.asib == "ibnamm_liab":
         case.ibnamm_liab["shares"] = case.ibnamm_liab.get("shares", 0) + case.baqi
-    elif asib == "amm":
+    elif case.asib == "amm":
         case.amm["shares"] = case.amm.get("shares", 0) + case.baqi
     case.ending = "taseeb"
     
@@ -457,14 +454,23 @@ def radd_multi_no_spouse(case):
     return case
 
 def radd_single_with_spouse(case):
-    if case.zawj.get("fard", 0).denominator:
+    
+    if case.has_husband:
         spouse_denominator = case.zawj.get("fard", 0).denominator
-    else:
-        spouse_denominator = case.zawja.get("fard", 0).denominator    
-    case._raas_override = spouse_denominator 
+        spouse_heir = getattr(case, 'zawja')
+        spouse_heir['shares'] = 1
+        setattr(case, 'zawj', spouse_heir)
+    elif case.has_wife:
+        spouse_denominator = case.zawja.get("fard", 0).denominator
+        spouse_heir = getattr(case, 'zawja')
+        spouse_heir['shares'] = 1
+        setattr(case, 'zawja', spouse_heir)
+
+    case._raas_override = spouse_denominator
     heir_name, heir_data, _ = case.radd_heirs[0]        
-    heir_data["shares"] = spouse_denominator -1
+    heir_data["shares"] = spouse_denominator -1   
     setattr(case, heir_name, heir_data)
+    
     return case
 
 

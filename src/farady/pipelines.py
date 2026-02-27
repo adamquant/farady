@@ -173,7 +173,7 @@ def calculate(case: Case) -> Case:
     if case.baqi < 0:
         case = awl_step(case)
 
-    elif case.asib_present:
+    elif case.asib:
         case = taseeb_step(case) 
 
     elif case.baqi > 0 and case.total_shares > 0:

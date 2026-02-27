@@ -19,6 +19,7 @@ class HeirData(TypedDict, total=False):
     asib: bool | None
     pct: float | None
     shares: int | None
+    _share_override: bool | None
 
 
 def _default_heir_data() -> HeirData:
@@ -191,7 +192,7 @@ class Case:
         )
 
     @property
-    def is_asib(self) -> bool:
+    def has_asib(self) -> bool:
         return any(heir.get("asib", False) for heir in self._all_heirs)
 
     @property
@@ -216,19 +217,20 @@ class Case:
     def is_kalala(self) -> bool:
         return not (self.has_any_furoo or self.has_m_usool)
 
-    @property
-    def asib_present(self) -> bool:
-        return any(
-            (
-                self.has_m_usool,
-                self.has_m_furoo,
-                self.shaqiq.get("count", 0),
-                self.aliab.get("count", 0),
-                self.amm.get("count", 0),
-                self.ibnamm_sh.get("count", 0),
-                self.ibnamm_liab.get("count", 0),
-            )
-        )
+    # @property #@adam this si frozen becasue it is very flawed (shaqiqa/uliab logic)
+    # def asib_present(self) -> bool:
+    #     return any(
+    #         (
+    #             self.has_m_usool,
+    #             self.has_m_furoo,
+    #             self.shaqiq.get("count", 0),
+    #             self.aliab.get("count", 0),
+    #             self.amm.get("count", 0),
+    #             self.ibnamm_sh.get("count", 0),
+    #             self.ibnamm_liab.get("count", 0),
+
+    #         )
+    #     )
 
     @property
     def is_umuriya1(self) -> bool:
