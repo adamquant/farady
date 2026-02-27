@@ -2,13 +2,14 @@ from __future__ import annotations
 from functools import reduce
 from fractions import Fraction as frac
 from dataclasses import dataclass, field
-from typing import Self, Any, TypedDict
+from typing import Any, TypedDict, Dict, Union
 
 
-type HeirKey = str
-type FractionDict = dict[HeirKey, frac]
-type DistributionDict = dict[HeirKey, float]
-type CaseDict = dict[HeirKey, int | bool]
+# Type aliases (compatible with older Python versions)
+HeirKey = str
+FractionDict = Dict[HeirKey, frac]
+DistributionDict = Dict[HeirKey, float]
+CaseDict = Dict[HeirKey, Union[int, bool]]
 
 
 class HeirData(TypedDict, total=False):
@@ -46,7 +47,7 @@ class Case:
     amm: HeirData = field(default_factory=_default_heir_data)
     zawj: HeirData = field(default_factory=_default_heir_data)
     zawja: HeirData = field(default_factory=_default_heir_data)
-    
+
     ending: str | None = None
     asib: str | None = None
     status: str | None = None
@@ -64,6 +65,7 @@ class Case:
     @property
     def has_husband(self) -> bool:
         return bool(self.zawj.get("count", 0))
+
     @property
     def has_wife(self) -> bool:
         return bool(self.zawja.get("count", 0))
@@ -282,7 +284,7 @@ class Case:
         if self._raas_override is not None:
             return self._raas_override
 
-        def lcm(a: int, b: int) -> int: # @adam update to newer built in since 3.9
+        def lcm(a: int, b: int) -> int:  # @adam update to newer built in since 3.9
             from math import gcd
 
             return abs(a * b) // gcd(a, b) if a and b else (a or b)
@@ -326,6 +328,38 @@ class Case:
             if heir.get("count", 0):
                 result[name] = heir.get("count", 0)
         return result
+
+    def __str__(self) -> str:
+        """Return a human-readable string representation of the Case."""
+        heir_info = []
+        for name, heir in zip(self._all_heir_names, self._all_heirs):
+            if heir.get("count", 0) > 0 or heir.get("shares", 0) > 0:
+                info_parts = [f"{name}={{'count': {heir.get('count', 0)}"]
+                if heir.get("fard") is not None:
+                    info_parts.append(f"'fard': {heir.get('fard')}")
+                if heir.get("shares") is not None:
+                    info_parts.append(f"'shares': {heir.get('shares')}")
+                if heir.get("asib"):
+                    info_parts.append(f"'asib': {heir.get('asib')}")
+                info_parts.append("}")
+                heir_info.append(", ".join(info_parts))
+
+        attrs = []
+        if self.ending:
+            attrs.append(f"ending='{self.ending}'")
+        if self.asib:
+            attrs.append(f"asib={self.asib}")
+        if self.status:
+            attrs.append(f"status='{self.status}'")
+        if self.heads is not None:
+            attrs.append(f"heads={self.heads}")
+        if self._raas_override is not None:
+            attrs.append(f"_raas_override={self._raas_override}")
+        if self.total_shares_radd:
+            attrs.append(f"total_shares_radd={self.total_shares_radd}")
+
+        all_info = heir_info + attrs
+        return f"Case({', '.join(all_info)})" if all_info else "Case()"
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> Self:
