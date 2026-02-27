@@ -24,7 +24,7 @@ def _default_heir_data() -> HeirData:
     return {}
 
 
-@dataclass()
+@dataclass
 class Case:
     ibn: HeirData = field(default_factory=_default_heir_data)
     bint: HeirData = field(default_factory=_default_heir_data)
@@ -46,18 +46,27 @@ class Case:
     amm: HeirData = field(default_factory=_default_heir_data)
     zawj: HeirData = field(default_factory=_default_heir_data)
     zawja: HeirData = field(default_factory=_default_heir_data)
-
+    
     ending: str | None = None
     asib: str | None = None
     status: str | None = None
     heads: int | None = None
     _raas_override: int | None = None
+    radd_heirs: list = field(default_factory=list)
+    total_shares_radd: int = 0
 
     # Calculation state tracking attributes
     shaqiqa_taking_half: bool | None = None
     shaqiqas_taking_twothirds: bool | None = None
     bint_taking_half: bool | None = None
     bints_taking_twothirds: bool | None = None
+
+    @property
+    def has_husband(self) -> bool:
+        return bool(self.zawj.get("count", 0))
+    @property
+    def has_wife(self) -> bool:
+        return bool(self.zawja.get("count", 0))
 
     @property
     def _all_heirs(self) -> list[HeirData]:
@@ -273,7 +282,7 @@ class Case:
         if self._raas_override is not None:
             return self._raas_override
 
-        def lcm(a: int, b: int) -> int:
+        def lcm(a: int, b: int) -> int: # @adam update to newer built in since 3.9
             from math import gcd
 
             return abs(a * b) // gcd(a, b) if a and b else (a or b)

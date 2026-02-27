@@ -172,18 +172,15 @@ def calculate(case: Case) -> Case:
 
     if case.baqi < 0:
         case = awl_step(case)
-        case.ending = "awl"
-    
-    elif case.baqi > 0:
-        if case.asib_present or case.asib:
-            case = taseeb_step(case)
-            case.ending = "taseeb"
-        elif case.total > 0:
-            case = radd_step(case)
-            case.ending = "radd"
+
+    elif case.asib_present:
+        case = taseeb_step(case) 
+
+    elif case.baqi > 0 and case.total_shares > 0:
+        case = radd_step(case)
+        case.ending = "radd"
 
     case.status = _determine_status(case)
-
 
     return case
 

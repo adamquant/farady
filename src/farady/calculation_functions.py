@@ -2,9 +2,8 @@ from __future__ import annotations
 from fractions import Fraction as frac
 from math import gcd
 from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from farady.classes import Case
+from farady.classes import Case
+import math
 
 
 def _lcm(a: int, b: int) -> int:
@@ -113,7 +112,6 @@ def kalala_step(case: Case) -> Case:
 
 def usool_step(case: Case) -> Case:
     """Calculate usool (roots) shares - parents and grandparents."""
-    has_jame = case.has_jame
 
     if case.has_any_furoo:
         if case.ab.get("count"):
@@ -131,13 +129,13 @@ def usool_step(case: Case) -> Case:
         elif case.jadda.get("count"):
             case.jadda["fard"] = frac("1/6")
 
-    elif not case.has_any_furoo and not has_jame:
+    elif not case.has_any_furoo and not case.has_jame:
         if case.umm.get("count"):
             case.umm["fard"] = frac("1/3")
         elif case.jadda.get("count"):
             case.jadda["fard"] = frac("1/6")
 
-    elif has_jame:
+    elif case.has_jame:
         if case.umm.get("count"):
             case.umm["fard"] = frac("1/6")
         elif case.jadda.get("count"):
@@ -155,59 +153,52 @@ def usool_step(case: Case) -> Case:
 def furoo_step(case: Case) -> Case:
     """Calculate furoo (descendants) shares - children and grandchildren."""
 
-    ibn_count = case.ibn.get("count", 0)
-    bint_count = case.bint.get("count", 0)
-    iibn_count = case.iibn.get("count", 0)
-    bibn_count = case.bibn.get("count", 0)
-    iiibn_count = case.iiibn.get("count", 0)
-    biibn_count = case.biibn.get("count", 0)
-
-    if ibn_count and not bint_count:
+    if case.ibn.get("count", 0) and not case.bint.get("count", 0):
         case.asib = "ibn"
-    elif ibn_count and bint_count:
+    elif case.ibn.get("count", 0) and case.bint.get("count", 0):
         case.asib = "ibn-bint"
-    elif not ibn_count and bint_count:
-        if bint_count == 1:
+    elif not case.ibn.get("count", 0) and case.bint.get("count", 0):
+        if case.bint.get("count", 0) == 1:
             case.bint["fard"] = frac(1, 2)
             case.bint_taking_half = True
         else:
             case.bint["fard"] = frac(2, 3)
             case.bints_taking_twothirds = True
 
-    if case.asib is None and (iibn_count or bibn_count):
-        if iibn_count:
-            if not bibn_count:
+    if case.asib is None and (case.ibn.get("count", 0) or case.bibn.get("count", 0)):
+        if case.ibn.get("count", 0):
+            if not case.bibn.get("count", 0):
                 case.asib = "iibn"
             else:
                 case.asib = "iibn-bibn"
-        elif bibn_count and case.bint_taking_half:
+        elif case.bibn.get("count", 0) and case.bint_taking_half:
             case.bibn["fard"] = frac(1, 6)
             case.bints_taking_twothirds = True
-        elif bibn_count and not (case.bint_taking_half or case.bints_taking_twothirds):
-            if bibn_count == 1:
+        elif case.bibn.get("count", 0) and not (case.bint_taking_half or case.bints_taking_twothirds):
+            if case.bibn.get("count", 0) == 1:
                 case.bibn["fard"] = frac(1, 2)
                 case.bint_taking_half = True
             else:
                 case.bibn["fard"] = frac(2, 3)
                 case.bints_taking_twothirds = True
-        elif case.bints_taking_twothirds and bibn_count:
+        elif case.bints_taking_twothirds and case.bibn.get("count", 0):
             pass
 
     if case.asib is None:
-        if iiibn_count:
-            if not biibn_count:
+        if case.iiibn.get("count", 0):
+            if not case.biibn.get("count", 0):
                 case.asib = "iiibn"
-            elif bibn_count:
+            elif case.bibn.get("count", 0):
                 case.asib = "iiibn-bibn"
-            elif biibn_count:
+            elif case.biibn.get("count", 0):
                 case.asib = "iiibn-biibn"
-            if bibn_count and biibn_count:
+            if case.bibn.get("count", 0) and case.biibn.get("count", 0):
                 case.asib = "iiibn-biibn-bibn"
-        elif biibn_count and case.bint_taking_half and not case.bints_taking_twothirds:
+        elif case.biibn.get("count", 0) and case.bint_taking_half and not case.bints_taking_twothirds:
             case.biibn["fard"] = frac(1, 6)
             case.bints_taking_twothirds = True
-        elif biibn_count and not (case.bints_taking_twothirds or case.bint_taking_half):
-            if biibn_count == 1:
+        elif case.biibn.get("count", 0) and not (case.bints_taking_twothirds or case.bint_taking_half):
+            if case.biibn.get("count", 0) == 1:
                 case.biibn["fard"] = frac(1, 2)
             else:
                 case.biibn["fard"] = frac(2, 3)
@@ -279,7 +270,7 @@ def hawashi_step(case: Case) -> Case:
             ):
                 case.uliab["fard"] = frac(1, 2) if case.uliab.get("count", 0) == 1 else frac(2, 3)
 
-    if case.asib is None:
+    if case.asib_present and case.asib is None:
         if case.ibnamm_sh.get("count"):
             case.asib = "ibnamm_sh"
         elif case.ibnamm_liab.get("count"):
@@ -292,17 +283,18 @@ def hawashi_step(case: Case) -> Case:
 
 def taseeb_step(case: Case) -> Case:
     """Calculate ta'seeb (residual) shares.
-
+    you only get here is an asib is present. I like tha tbhavior and i want to standardise it.
     When there are asib (residual heirs), they receive the remaining portion.
     For mixed male/female asibs (lizakari): uses heads calculation.
     For single-type asibs: baqi goes directly to that type.
     """
-    if case.baqi <= 0:
+
+    if case.baqi == 0:
         return case
 
     case.heads = _compute_heads(case)
     if case.heads == 0:
-        return case
+        return case # when would htis ever be @adam?
 
     # RUN INKISAAR STEP
 
@@ -381,7 +373,8 @@ def taseeb_step(case: Case) -> Case:
         case.ibnamm_liab["shares"] = case.ibnamm_liab.get("shares", 0) + case.baqi
     elif asib == "amm":
         case.amm["shares"] = case.amm.get("shares", 0) + case.baqi
-
+    case.ending = "taseeb"
+    
     return case
 
 
@@ -401,6 +394,8 @@ def awl_step(case: Case) -> Case:
             if heir.get("fard"):
                 heir["fard"] = heir["fard"] * awl_factor
 
+    case.ending = "awl"
+
     return case
 
 
@@ -410,63 +405,207 @@ def radd_step(case: Case) -> Case:
     When the total of fard shares is less than 1, the remaining (baqi)
     goes back to fard holders proportionally, INCLUDING spouses in this build - future functionality will allow for a choice of classic vs contemporary spousal treatment w/r radd (AA)
     """
-    if case.baqi <= 0:
-        return case
 
-    radd_heirs = []
-    radd_shares_total = 0
-
+    ### DETERMINE RADD HEADS ###
     for name, heir in zip(case._all_heir_names, case._all_heirs):
         if name in ("zawj", "zawja"):
             continue
-        shares = heir.get("shares", 0)
-        if shares:
-            radd_heirs.append((name, heir, shares))
-            radd_shares_total += shares
+        if heir.get("shares", 0):
+            case.radd_heirs.append((name, heir, heir.get("shares", 0)))
+            case.total_shares_radd += heir.get("shares", 0)
+    
+    
+    # assign to zawj or zawja in absence of radd heads.
+    if len(case.radd_heirs) == 0 or case.total_shares_radd == 0:
+        for name in ("zawj", "zawja"):
+            heir = getattr(case, name)
+            if heir.get("shares", 0):
+                heir["shares"] = heir.get("shares", 0) + case.baqi
+                break
 
-    if not radd_heirs or radd_shares_total == 0:
-        if not case.asib:
-            for name in ("zawj", "zawja"):
-                heir = getattr(case, name)
-                if heir.get("shares", 0) > 0:
-                    heir["shares"] = heir.get("shares", 0) + case.baqi
-                    break
-        return case
+###==== RADD: ONE SINF, NO ZAWJAYN ===###
 
-    if case.baqi % radd_shares_total != 0:
-        old_raas = case.raas
-        new_raas = _lcm(old_raas, radd_shares_total)
-        multiplier = new_raas // old_raas
+    if len(case.radd_heirs) == 1 and not case.is_married:
+        return radd_single_no_spouse(case)
 
-        for heir in case._all_heirs:
-            shares = heir.get("shares")
-            if shares:
-                heir["shares"] = shares * multiplier
+###==== RADD: MULTI SINF, NO ZAWJAYN ===###
+    elif len(case.radd_heirs) > 1 and not case.is_married: 
+        return radd_multi_no_spouse(case)
 
-        case._raas_override = new_raas
-        radd_shares_total *= multiplier
-        radd_heirs = [(n, h, h.get("shares", 0)) for n, h, _ in radd_heirs]
+###==== RADD: ONE SINF, WITH ZAWJAYN ===###
+    elif len(case.radd_heirs) == 1 and case.is_married:
+        return radd_single_with_spouse(case)
+        
 
-    # Use fractional arithmetic for precise radd calculation
-    total_shares = sum(shares for _, _, shares in radd_heirs)
+###==== RADD: MULTI SINF, WITH ZAWJAYN ===###       
+        
+    else:
+        return radd_multi_with_spouse(case)
 
-    # Calculate and distribute radd portions
-    total_radd_distributed = 0
-    for i, (name, heir, shares) in enumerate(radd_heirs):
-        # Calculate exact fractional radd portion
-        radd_fraction = frac(case.baqi) * frac(shares, total_shares)
-        radd_portion = int(radd_fraction)  # Integer division to get whole shares
-
-        # Handle remainder - distribute it to the first heir to avoid fractional shares
-        if i == 0:
-            remainder = case.baqi - sum(
-                int(frac(case.baqi) * frac(h_shares, total_shares))
-                for _, _, h_shares in radd_heirs
-            )
-            radd_portion += remainder
-
-        current_shares = heir.get("shares", 0)
-        heir["shares"] = current_shares + radd_portion
-        total_radd_distributed += radd_portion
+    case.ending = "radd"
 
     return case
+
+
+###=== RADD FUNCTIONS ===####
+
+def radd_single_no_spouse(case):
+    case._raas_override = 1   
+    heir_name, heir_data, _ = case.radd_heirs[0]        
+    heir_data["shares"] = 1
+    setattr(case, heir_name, heir_data)
+    return case
+
+def radd_multi_no_spouse(case):
+    case._raas_override = case.total_shares_radd
+    return case
+
+def radd_single_with_spouse(case):
+    if case.zawj.get("fard", 0).denominator:
+        spouse_denominator = case.zawj.get("fard", 0).denominator
+    else:
+        spouse_denominator = case.zawja.get("fard", 0).denominator    
+    case._raas_override = spouse_denominator 
+    heir_name, heir_data, _ = case.radd_heirs[0]        
+    heir_data["shares"] = spouse_denominator -1
+    setattr(case, heir_name, heir_data)
+    return case
+
+
+def radd_multi_with_spouse(case):
+   
+   #### ==== REQUIRES NEW MINI CASE ===###
+    mini_case_spouse = create_mini_case_for_spouses(case)
+    mini_case_radd = create_mini_case_for_radd(case)
+
+    ###=== PREPARE FACTORS AND REBALANCING ===####
+
+    mini_case_radd = assign_values_for_radd_conversion(mini_case_radd)
+    radd_comparison_factor = math.lcm(mini_case_radd.get("raas", 0), mini_case_spouse.baqi)
+    spousal_factor = radd_comparison_factor // mini_case_spouse.baqi
+    radd_group_factor = radd_comparison_factor // mini_case_radd.get("raas", 0)
+    case._raas_override = int(mini_case_spouse.raas * spousal_factor)
+
+    ####=== UPDATE NEW SHARES ==###
+    case = update_case_with_radd_shares(case, mini_case_radd, radd_group_factor, mini_case_spouse, spousal_factor)
+    #assert case.total_shares == case.raas and case.baqi == 0, "Radd failed"
+    return case
+
+
+def assign_values_for_radd_conversion(mini_case_radd):
+    """
+    Only used for cases of multi with a spouse (Radd Case 4)
+    
+    Returns the mini_case_radd dict with computed raas value and new_share values for each heir
+    """
+    import math
+    from fractions import Fraction
+    
+    # Extract fractions from heirs who have fard values
+    shares_list = []
+    heirs_with_fard = []
+    
+    for name, heir_data in mini_case_radd.items():
+        if heir_data.get("fard"):
+            shares_list.append(heir_data["fard"])
+            heirs_with_fard.append(name)
+    
+    # If no heirs with fard values, set raas to 1
+    if not shares_list:
+        mini_case_radd["raas"] = 1
+        return mini_case_radd
+    
+    # Calculate LCD of all denominators
+    dens = [f.denominator for f in shares_list]
+    lcd = math.lcm(*dens)
+    
+    # Calculate new shares for each heir and store in their entry
+    total_new_shares = 0
+    for i, name in enumerate(heirs_with_fard):
+        f = mini_case_radd[name]["fard"]
+        multiplier = lcd // f.denominator
+        new_num = f.numerator * multiplier
+        
+        # Store the new numerator in the heir's entry
+        mini_case_radd[name]["new_share"] = new_num
+        total_new_shares += new_num
+    
+    # Add computed raas value to the dictionary
+    mini_case_radd["raas"] = total_new_shares
+    
+    return mini_case_radd
+
+def update_case_with_radd_shares(case, mini_case_radd, radd_group_factor, mini_case_spouse, spousal_factor):
+    """
+    Update case object directly with new share values (mutating function)
+    
+    Args:
+        case: Main Case object to update directly
+        mini_case_radd: Dictionary containing heir data with new_share values
+        radd_group_factor: Factor to multiply new shares by
+        mini_case_spouse: Spouse case object
+        spousal_factor: Factor to multiply spouse shares by
+        
+    Returns:
+        Updated Case object (same reference)
+    """
+    from fractions import Fraction
+    
+    # First update spouse shares
+    if hasattr(mini_case_spouse, 'zawj') and mini_case_spouse.zawj.get("count", 0):
+        spouse_heir = getattr(case, 'zawj')
+        spouse_heir['shares'] = int(mini_case_spouse.zawj.get("shares", 0) * spousal_factor)
+        setattr(case, 'zawj', spouse_heir)
+    elif hasattr(mini_case_spouse, 'zawja') and mini_case_spouse.zawja.get("count", 0):
+        spouse_heir = getattr(case, 'zawja')
+        spouse_heir['shares'] = int(mini_case_spouse.zawja.get("shares", 0) * spousal_factor)
+        setattr(case, 'zawja', spouse_heir)
+    
+    # Update shares for each heir in mini_case_radd
+    for heir_name, heir_data in mini_case_radd.items():
+        # Skip the special 'raas' key and ensure heir_data is a dict with 'new_share'
+        if (heir_name != 'raas' and 
+            isinstance(heir_data, dict) and 
+            'new_share' in heir_data and
+            heir_data['new_share'] is not None):
+            
+            # Get the current heir data from the case
+            heir_obj = getattr(case, heir_name)
+            
+            # Calculate the new share value
+            new_share_value = heir_data["new_share"] * radd_group_factor
+            
+            # Update the shares in the heir data
+            heir_obj["shares"] = int(new_share_value)
+            
+            # Set the updated heir data back to the case
+            setattr(case, heir_name, heir_obj)
+    
+    return case
+
+def create_mini_case_for_radd(case):
+    mini_case_radd = {}
+    for name in case._all_heir_names:
+        if name not in ("zawj", "zawja"): 
+            heir_data = getattr(case, name)
+            if heir_data.get("fard"):
+                mini_case_radd[name] = {
+                    "fard": heir_data["fard"],
+                    "new_shares": 0
+                }
+    return mini_case_radd
+
+def create_mini_case_for_spouses(case):
+    mini_case_spouse = Case(
+        zawj=case.zawj.copy() if (case.zawj.get("count", 0) or case.zawj.get("shares", 0)) else {},
+        zawja=case.zawja.copy() if (case.zawja.get("count", 0) or case.zawja.get("shares", 0)) else {}
+    )
+    mini_case_spouse._raas_override = mini_case_spouse.raas
+    
+    # crucial to fix raas:
+    mini_case_spouse._raas_override = mini_case_spouse.zawj.get("fard").denominator if mini_case_spouse.has_husband else mini_case_spouse.zawja.get("fard").denominator
+    if mini_case_spouse.zawja.get("fard"):
+        mini_case_spouse.zawja["shares"] = int(mini_case_spouse.zawja["fard"] * mini_case_spouse.raas)
+    if mini_case_spouse.zawj.get("fard"):
+        mini_case_spouse.zawj["shares"] = int(mini_case_spouse.zawj["fard"] * mini_case_spouse.raas)
+    return mini_case_spouse
