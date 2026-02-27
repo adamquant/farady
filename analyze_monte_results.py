@@ -19,9 +19,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from farady import calculate_from_dict, _build_distribution
 
-# Categories for test cases
-CATEGORIES = ("ordinary", "no_fare", "hawashi")
-
 
 def load_test_cases():
     """Load test cases from the test_cases.npz file."""
@@ -30,7 +27,7 @@ def load_test_cases():
         raise FileNotFoundError(f"Test data not found at {data_path}")
 
     data = np.load(data_path, allow_pickle=True)
-    return {cat: list(data[cat]) for cat in CATEGORIES}
+    return list(data["ordinary"])
 
 
 def case_to_result(case_dict):
@@ -68,81 +65,71 @@ def analyze_totals(results):
     """Analyze distribution totals."""
     print("=== TOTAL ANALYSIS ===")
 
-    for cat in CATEGORIES:
-        cat_results = results[cat]
-        totals = [r[1]["total"] for r in cat_results]
+    totals = [r[1]["total"] for r in results]
 
-        print(f"\n{cat.upper()} category:")
-        print(f"  Count: {len(totals)}")
-        print(f"  Min: {min(totals):.4f}")
-        print(f"  Max: {max(totals):.4f}")
-        print(f"  Mean: {np.mean(totals):.4f}")
-        print(f"  Std: {np.std(totals):.4f}")
+    print(f"\nOrdinary cases:")
+    print(f"  Count: {len(totals)}")
+    print(f"  Min: {min(totals):.4f}")
+    print(f"  Max: {max(totals):.4f}")
+    print(f"  Mean: {np.mean(totals):.4f}")
+    print(f"  Std: {np.std(totals):.4f}")
 
-        # Count how many are exactly 1.0
-        exact_ones = sum(1 for t in totals if round(t, 2) == 1.0)
-        print(f"  Exactly 1.0: {exact_ones} ({exact_ones / len(totals) * 100:.1f}%)")
+    # Count how many are exactly 1.0
+    exact_ones = sum(1 for t in totals if round(t, 2) == 1.0)
+    print(f"  Exactly 1.0: {exact_ones} ({exact_ones / len(totals) * 100:.1f}%)")
 
-        # Count anomalies
-        anomalies = [
-            (i, r[0], t)
-            for i, (r, t) in enumerate(zip(cat_results, totals))
-            if round(t, 2) != 1.0
-        ]
-        print(
-            f"  Anomalies: {len(anomalies)} ({len(anomalies) / len(totals) * 100:.1f}%)"
-        )
+    # Count anomalies
+    anomalies = [
+        (i, r[0], t)
+        for i, (r, t) in enumerate(zip(results, totals))
+        if round(t, 2) != 1.0
+    ]
+    print(f"  Anomalies: {len(anomalies)} ({len(anomalies) / len(totals) * 100:.1f}%)")
 
-        if anomalies:
-            print("  Sample anomalies:")
-            for i, (idx, case, total) in enumerate(anomalies[:5]):
-                print(f"    {i + 1}. Case {idx}: total={total:.4f}, case={case}")
+    if anomalies:
+        print("  Sample anomalies:")
+        for i, (idx, case, total) in enumerate(anomalies[:5]):
+            print(f"    {i + 1}. Case {idx}: total={total:.4f}, case={case}")
 
 
 def analyze_ibn_shares(results):
     """Analyze ibn share allocation."""
     print("\n=== IBN SHARE ANALYSIS ===")
 
-    for cat in CATEGORIES:
-        cat_results = results[cat]
-        # Cases where ibn is present
-        ibn_cases = [
-            (i, r) for i, r in enumerate(cat_results) if r[0].get("ibn", 0) > 0
-        ]
-        # Cases where ibn is present but gets no share
-        ibn_no_share = [
-            (i, r) for i, r in ibn_cases if r[1]["numerators"].get("ibn", 0) == 0
-        ]
+    # Cases where ibn is present
+    ibn_cases = [(i, r) for i, r in enumerate(results) if r[0].get("ibn", 0) > 0]
+    # Cases where ibn is present but gets no share
+    ibn_no_share = [
+        (i, r) for i, r in ibn_cases if r[1]["numerators"].get("ibn", 0) == 0
+    ]
 
-        print(f"\n{cat.upper()} category:")
-        print(f"  Cases with ibn: {len(ibn_cases)}")
-        print(f"  Cases with ibn but no share: {len(ibn_no_share)}")
-        if ibn_cases:
-            print(
-                f"  Percentage with no share: {len(ibn_no_share) / len(ibn_cases) * 100:.1f}%"
-            )
+    print(f"\nOrdinary cases:")
+    print(f"  Cases with ibn: {len(ibn_cases)}")
+    print(f"  Cases with ibn but no share: {len(ibn_no_share)}")
+    if ibn_cases:
+        print(
+            f"  Percentage with no share: {len(ibn_no_share) / len(ibn_cases) * 100:.1f}%"
+        )
 
-        if ibn_no_share:
-            print("  Sample cases with ibn but no share:")
-            for i, (idx, (case, result)) in enumerate(ibn_no_share[:5]):
-                print(f"    {i + 1}. Case {idx}: {case[0]}")
+    if ibn_no_share:
+        print("  Sample cases with ibn but no share:")
+        for i, (idx, (case, result)) in enumerate(ibn_no_share[:5]):
+            print(f"    {i + 1}. Case {idx}: {case[0]}")
 
 
 def analyze_endings(results):
     """Analyze calculation endings."""
     print("\n=== ENDING ANALYSIS ===")
 
-    for cat in CATEGORIES:
-        cat_results = results[cat]
-        endings = defaultdict(int)
+    endings = defaultdict(int)
 
-        for _, result in cat_results:
-            ending = result["ending"] or "none"
-            endings[ending] += 1
+    for _, result in results:
+        ending = result["ending"] or "none"
+        endings[ending] += 1
 
-        print(f"\n{cat.upper()} category:")
-        for ending, count in sorted(endings.items()):
-            print(f"  {ending}: {count} ({count / len(cat_results) * 100:.1f}%)")
+    print(f"\nOrdinary cases:")
+    for ending, count in sorted(endings.items()):
+        print(f"  {ending}: {count} ({count / len(results) * 100:.1f}%)")
 
 
 def load_failure_cases(test_name):
@@ -171,16 +158,15 @@ def analyze_failures():
         print("No failure data found.")
         return
 
-    for cat in CATEGORIES:
-        failures = failure_data.get(cat, [])
-        if failures:
-            print(f"\n{cat.upper()} failures in total test:")
-            print(f"  Count: {len(failures)}")
-            print("  Sample failures:")
-            for i, failure in enumerate(failures[:5]):
-                case = failure["case"]
-                result = failure["result"]
-                print(f"    {i + 1}. Total={result['total']:.4f}, case={case}")
+    failures = failure_data.get("ordinary", [])
+    if failures:
+        print(f"\nOrdinary failures in total test:")
+        print(f"  Count: {len(failures)}")
+        print("  Sample failures:")
+        for i, failure in enumerate(failures[:5]):
+            case = failure["case"]
+            result = failure["result"]
+            print(f"    {i + 1}. Total={result['total']:.4f}, case={case}")
 
 
 def main():
@@ -191,12 +177,10 @@ def main():
     # Limit for analysis (default 1000 like in tests)
     limit = int(os.environ.get("FARADY_MONTE_LIMIT", "1000"))
 
-    print(f"Processing {limit} cases per category...")
-    results = {}
-    for cat in CATEGORIES:
-        cat_cases = cases[cat][:limit] if limit > 0 else []
-        results[cat] = [(c, case_to_result(c)) for c in cat_cases]
-        print(f"  {cat}: {len(cat_cases)} cases processed")
+    print(f"Processing {limit} cases...")
+    cat_cases = cases[:limit] if limit > 0 else []
+    results = [(c, case_to_result(c)) for c in cat_cases]
+    print(f"  Ordinary: {len(cat_cases)} cases processed")
 
     # Run analyses
     analyze_totals(results)

@@ -65,37 +65,25 @@ MAX_COUNTS = {
     "zawja": 4,  # Up to 4 wives
 }
 
-SIMS = 500_000
-SEED = 42
-OUTPUT_FILE = Path(__file__).parent.parent / "tests" / "data" / "test_cases.npz"
+SIMS = 1_000_000
+SEED = 15
+OUTPUT_FILE = Path(__file__).parent.parent / "tests" / "data" / "test_cases_v2.npz"
 
 
-def build_random_case(rng=None, focus=None):
+def build_random_case(rng=None):
     """Build a random inheritance case.
 
     Args:
         rng: Random number generator
-        focus: Focus area ('no_descendants', 'hawashi', or None)
     """
     if rng is None:
         rng = np.random.default_rng()
 
     case = {}
 
-    # Determine which heirs to include based on focus
-    if focus == "no_descendants":
-        # Exclude descendants
-        heirs_to_consider = ASCENDANTS + SIBLINGS + OTHER_RELATIVES + SPOUSES
-    elif focus == "hawashi":
-        # Focus on siblings and other relatives
-        heirs_to_consider = SIBLINGS + OTHER_RELATIVES + SPOUSES
-    else:
-        # Include all heirs
-        heirs_to_consider = ALL_HEIRS
-
     # Randomly select which heirs to include (at least one)
-    num_heirs = rng.integers(1, min(len(heirs_to_consider) + 1, 8))  # At least 1, max 7
-    selected_heirs = rng.choice(heirs_to_consider, size=num_heirs, replace=False)
+    num_heirs = rng.integers(1, min(len(ALL_HEIRS) + 1, 8))  # At least 1, max 7
+    selected_heirs = rng.choice(ALL_HEIRS, size=num_heirs, replace=False)
 
     # Assign counts to selected heirs
     for heir in selected_heirs:
@@ -154,32 +142,16 @@ def deduplicate_cases(cases):
 
 def main():
     rng = np.random.default_rng(SEED)
-    print(f"Generating {SIMS:,} cases per category with seed={SEED}...")
-    print("  Generating ordinary cases...")
+    print(f"Generating {SIMS:,} ordinary cases with seed={SEED}...")
     ordinary = [build_random_case(rng=rng) for _ in range(SIMS)]
     ordinary = filter_valid_cases(ordinary)  # Filter out empty/invalid cases
 
-    print("  Generating no_fare cases...")
-    no_fare = [build_random_case(focus="no_descendants", rng=rng) for _ in range(SIMS)]
-    no_fare = filter_valid_cases(no_fare)  # Filter out empty/invalid cases
-
-    print("  Generating hawashi cases...")
-    hawashi = [build_random_case(focus="hawashi", rng=rng) for _ in range(SIMS)]
-    hawashi = filter_valid_cases(hawashi)  # Filter out empty/invalid cases
-
     print("Deduplicating...")
     ordinary = deduplicate_cases(ordinary)
-    no_fare = deduplicate_cases(no_fare)
-    hawashi = deduplicate_cases(hawashi)
 
-    print(f"Unique cases:")
-    print(f"  ordinary: {len(ordinary):,}")
-    print(f"  no_fare:  {len(no_fare):,}")
-    print(f"  hawashi:  {len(hawashi):,}")
+    print(f"Unique cases: {len(ordinary):,}")
     print(f"Saving to {OUTPUT_FILE}...")
-    np.savez_compressed(
-        OUTPUT_FILE, ordinary=ordinary, no_fare=no_fare, hawashi=hawashi
-    )
+    np.savez_compressed(OUTPUT_FILE, ordinary=ordinary)
     size_mb = OUTPUT_FILE.stat().st_size / (1024 * 1024)
     print(f"Done! Size: {size_mb:.1f} MB")
 

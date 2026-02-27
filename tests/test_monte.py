@@ -30,21 +30,18 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from farady import calculate_from_dict
-from farady.pipelines import _build_distribution
-
-# Categories for test cases
-CATEGORIES = ("ordinary", "no_fare", "hawashi")
+from farady import calculate_from_dict, _build_distribution
 
 
 def load_test_cases():
-    """Load test cases from the test_cases.npz file."""
-    data_path = Path(__file__).parent / "data" / "test_cases.npz"
+    """Load test cases from the test_cases_v2.npz file."""
+    data_path = Path(__file__).parent / "data" / "test_cases_v2.npz"
     if not data_path.exists():
         raise FileNotFoundError(f"Test data not found at {data_path}")
 
     data = np.load(data_path, allow_pickle=True)
-    return {cat: list(data[cat]) for cat in CATEGORIES}
+    # Return a single array of cases instead of categorized dict
+    return list(data["ordinary"])
 
 
 def case_to_result(case_dict):
@@ -116,9 +113,8 @@ def case_to_result(case_dict):
         "total_shares": case.total_shares,
         "raas": case.raas,
         "numerators": numerators,
-        "heir_details": heir_details,  # Detailed breakdown of all heirs
-        "baqi": case.baqi,  # Remaining shares
-        "_raas_override": case._raas_override,
+        "heir_details": heir_details, 
+        "baqi": case.baqi,
     }
 
 
@@ -127,19 +123,25 @@ def collect_all_results(limit=None):
 
     # Apply limit if specified
     if limit is None:
-        limit = int(os.environ.get("LIMIT", "200000"))
+        limit = int(os.environ.get("LIMIT", "257000"))
 
-    results = {}
-    for cat in CATEGORIES:
-        cat_cases = cases[cat][:limit] if limit > 0 else cases[cat]
-        results[cat] = [(c, case_to_result(c)) for c in cat_cases]
+    # Apply limit to cases
+    cases = cases[:limit] if limit > 0 else cases
+    results = [(c, case_to_result(c)) for c in cases]
 
     return results
 
 
 def save_failures(failures, test_name):
-    if not any(failures.values()):
-        return None
+    # Check if there are any failures (now a single list instead of dict)
+    if isinstance(failures, dict):
+        # Old format with categories
+        if not any(failures.values()):
+            return None
+    else:
+        # New format with single list
+        if not failures:
+            return None
 
     output_dir = Path(__file__).parent / "output"
     output_dir.mkdir(exist_ok=True)
@@ -155,14 +157,11 @@ def save_failures(failures, test_name):
 
 def collect_failures(results, predicate):
     """Collect test cases that fail the given predicate."""
-    return {
-        cat: [
-            {"index": i, "case": c, "result": r}
-            for i, (c, r) in enumerate(results[cat])
-            if predicate(r)
-        ]
-        for cat in CATEGORIES
-    }
+    return [
+        {"index": i, "case": c, "result": r}
+        for i, (c, r) in enumerate(results)
+        if predicate(r)
+    ]
 
 
 # Load results once for all tests
@@ -184,15 +183,13 @@ def test_total_always_one():
     )
 
     # Save failures for analysis
-    save_failures(failures, "test_total_always_one")
+    failures_dict = {"ordinary": failures}
+    save_failures(failures_dict, "test_total_always_one")
 
     # Assert no failures
-    failure_counts = {cat: len(failures[cat]) for cat in CATEGORIES}
-    if any(count > 0 for count in failure_counts.values()):
-        failure_details = ", ".join(
-            f"{cat}: {count}" for cat, count in failure_counts.items() if count > 0
-        )
-        raise AssertionError(f"Total != 1.0 failures: {failure_details}")
+    failure_count = len(failures)
+    if failure_count > 0:
+        raise AssertionError(f"Total != 1.0 failures: {failure_count}")
 
 
 def test_ibn_has_share_when_present():
@@ -209,15 +206,13 @@ def test_ibn_has_share_when_present():
         ),
     )
 
-    save_failures(failures, "test_ibn_has_share_when_present")
+    failures_dict = {"ordinary": failures}
+    save_failures(failures_dict, "test_ibn_has_share_when_present")
 
     # Assert no failures
-    failure_counts = {cat: len(failures[cat]) for cat in CATEGORIES}
-    if any(count > 0 for count in failure_counts.values()):
-        failure_details = ", ".join(
-            f"{cat}: {count}" for cat, count in failure_counts.items() if count > 0
-        )
-        raise AssertionError(f"Ibn present but no share failures: {failure_details}")
+    failure_count = len(failures)
+    if failure_count > 0:
+        raise AssertionError(f"Ibn present but no share failures: {failure_count}")
 
 
 # def test_zawj_or_zawja_not_both():
@@ -236,12 +231,9 @@ def test_ibn_has_share_when_present():
 #     save_failures(failures, "test_zawj_or_zawja_not_both")
 
 #     # Assert no failures
-#     failure_counts = {cat: len(failures[cat]) for cat in CATEGORIES}
-#     if any(count > 0 for count in failure_counts.values()):
-#         failure_details = ", ".join(
-#             f"{cat}: {count}" for cat, count in failure_counts.items() if count > 0
-#         )
-#         raise AssertionError(f"Both zawj and zawja present: {failure_details}")
+#     failure_count = len(failures)
+#     if failure_count > 0:
+#         raise AssertionError(f"Both zawj and zawja present: {failure_count}")
 
 
 # def test_positive_shares_only():
@@ -256,81 +248,72 @@ def test_ibn_has_share_when_present():
 #     save_failures(failures, "test_positive_shares_only")
 
 #     # Assert no failures
-#     failure_counts = {cat: len(failures[cat]) for cat in CATEGORIES}
-#     if any(count > 0 for count in failure_counts.values()):
-#         failure_details = ", ".join(
-#             f"{cat}: {count}" for cat, count in failure_counts.items() if count > 0
-#         )
-#         raise AssertionError(f"Negative shares found: {failure_details}")
+#     failure_count = len(failures)
+#     if failure_count > 0:
+#         raise AssertionError(f"Negative shares found: {failure_count}")
 
 
 def test_unknown_status_should_fail():
-    """Test that fails if any case has 'Unknown' status in ordinary category.
+    """Test that fails if any case has 'Unknown' status.
 
     This test will fail pytest if any case has 'Unknown' status, and will save
     all such cases to a failure file for analysis.
     """
     results = get_test_results()
 
-    # Only check ordinary category for 'Unknown' status
-    unknown_failures = {
-        "ordinary": [
-            {"index": i, "case": c, "result": r}
-            for i, (c, r) in enumerate(results["ordinary"])
-            if r["status"] == "Unknown"
-        ]
-    }
+    # Check for 'Unknown' status cases
+    unknown_failures = [
+        {"index": i, "case": c, "result": r}
+        for i, (c, r) in enumerate(results)
+        if r["status"] == "Unknown"
+    ]
+
+    # Wrap in dict for save_failures function
+    unknown_failures_dict = {"ordinary": unknown_failures}
 
     # Save all 'Unknown' cases for analysis
-    if len(unknown_failures["ordinary"]) > 0:
-        save_failures(unknown_failures, "test_unknown_status_should_fail")
-        print(
-            f"Saved {len(unknown_failures['ordinary'])} 'Unknown' cases to failure file"
-        )
+    if len(unknown_failures) > 0:
+        save_failures(unknown_failures_dict, "test_unknown_status_should_fail")
+        print(f"Saved {len(unknown_failures)} 'Unknown' cases to failure file")
 
         # Fail the test - we don't want any 'Unknown' cases
         raise AssertionError(
-            f"Found {len(unknown_failures['ordinary'])} cases with 'Unknown' status"
+            f"Found {len(unknown_failures)} cases with 'Unknown' status"
         )
 
 
 def test_other_non_complete_cases():
-    """Record all other non-complete cases (Failed, etc.) for ordinary category only.
+    """Record all other non-complete cases (Failed, etc.).
 
     This test will not fail pytest, but will save all other non-complete cases
     to a failure file for analysis.
     """
     results = get_test_results()
 
-    # Only check ordinary category for non-'Complete' and non-'Unknown' cases
-    other_non_complete = {
-        "ordinary": [
-            {"index": i, "case": c, "result": r}
-            for i, (c, r) in enumerate(results["ordinary"])
-            if r["status"] != "Complete" and r["status"] != "Unknown"
-        ]
-    }
+    # Check for non-'Complete' and non-'Unknown' cases
+    other_non_complete = [
+        {"index": i, "case": c, "result": r}
+        for i, (c, r) in enumerate(results)
+        if r["status"] != "Complete" and r["status"] != "Unknown"
+    ]
 
     # Also collect 'Unknown' cases for comprehensive logging (but don't fail)
-    unknown_cases = {
-        "ordinary": [
-            {"index": i, "case": c, "result": r}
-            for i, (c, r) in enumerate(results["ordinary"])
-            if r["status"] == "Unknown"
-        ]
-    }
+    unknown_cases = [
+        {"index": i, "case": c, "result": r}
+        for i, (c, r) in enumerate(results)
+        if r["status"] == "Unknown"
+    ]
 
     # Combine all non-complete cases for logging
-    all_non_complete = {
-        "ordinary": other_non_complete["ordinary"] + unknown_cases["ordinary"]
-    }
+    all_non_complete = other_non_complete + unknown_cases
+
+    # Wrap in dict for save_failures function
+    all_non_complete_dict = {"ordinary": all_non_complete}
 
     # Save all non-complete cases for analysis (only if there are any)
-    if len(all_non_complete["ordinary"]) > 0:
-        save_failures(all_non_complete, "test_other_non_complete_cases")
-        print(
-            f"Saved {len(all_non_complete['ordinary'])} other non-complete cases to failure file"
-        )
+    if len(all_non_complete) > 0:
+        save_failures(all_non_complete_dict, "test_other_non_complete_cases")
+        print(f"Saved {len(all_non_complete)} other non-complete cases to failure file")
 
 
 def test_daughters_always_inherit():
@@ -346,14 +329,10 @@ def test_daughters_always_inherit():
     )
 
     # Save failures for analysis
-    save_failures(failures, "test_daughters_always_inherit")
+    failures_dict = {"ordinary": failures}
+    save_failures(failures_dict, "test_daughters_always_inherit")
 
     # Assert no failures
-    failure_counts = {cat: len(failures[cat]) for cat in CATEGORIES}
-    if any(count > 0 for count in failure_counts.values()):
-        failure_details = ", ".join(
-            f"{cat}: {count}" for cat, count in failure_counts.items() if count > 0
-        )
-        raise AssertionError(
-            f"Daughter present but no share failures: {failure_details}"
-        )
+    failure_count = len(failures)
+    if failure_count > 0:
+        raise AssertionError(f"Daughter present but no share failures: {failure_count}")

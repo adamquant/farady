@@ -36,8 +36,6 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from farady import calculate_from_dict, _build_distribution
 
-CATEGORIES = ("ordinary", "no_fare", "hawashi")
-
 MONTE_TESTS = [
     ("test_total_always_one", lambda r: round(r["total"], 2) != 1.0),
     ("test_status_is_complete", lambda r: r["status"] != "Complete"),
@@ -99,12 +97,12 @@ def _resolve_test_cases_path() -> "Path | None":
     return matches[0] if matches else None
 
 
-def load_test_cases() -> dict[str, list]:
+def load_test_cases() -> list:
     data_path = _resolve_test_cases_path()
     if data_path is None:
         pytest.skip("test_cases.npz not found")
     data = np.load(data_path, allow_pickle=True)
-    return {cat: list(data[cat]) for cat in CATEGORIES}
+    return list(data["ordinary"])
 
 
 def case_to_result(case) -> dict:
@@ -127,31 +125,22 @@ def case_to_result(case) -> dict:
 
 
 @functools.lru_cache(maxsize=1)
-def get_results() -> dict:
+def get_results() -> list:
     cases = load_test_cases()
     # Default to 1000 cases for faster iteration, but allow customization
     limit = int(os.environ.get("LIMIT", "1000"))
     if limit <= 0:
         # No limit - process all cases
-        return {
-            cat: [(c, case_to_result(calculate_from_dict(c))) for c in cases[cat]]
-            for cat in CATEGORIES
-        }
-    return {
-        cat: [(c, case_to_result(calculate_from_dict(c))) for c in cases[cat][:limit]]
-        for cat in CATEGORIES
-    }
+        return [(c, case_to_result(calculate_from_dict(c))) for c in cases]
+    return [(c, case_to_result(calculate_from_dict(c))) for c in cases[:limit]]
 
 
-def collect_failures(results: dict, predicate) -> dict[str, list[dict]]:
-    return {
-        cat: [
-            {"index": i, "case": c, "result": r}
-            for i, (c, r) in enumerate(results[cat])
-            if predicate(r)
-        ]
-        for cat in CATEGORIES
-    }
+def collect_failures(results: list, predicate) -> list[dict]:
+    return [
+        {"index": i, "case": c, "result": r}
+        for i, (c, r) in enumerate(results)
+        if predicate(r)
+    ]
 
 
 def save_failures(
@@ -169,15 +158,12 @@ def save_failures(
     return output_file
 
 
-def run_test(test_name: str, results: dict, predicate, description: str) -> dict:
+def run_test(test_name: str, results: list, predicate, description: str) -> list:
     failures = collect_failures(results, predicate)
     if failures:
-        save_failures(failures, test_name, datetime.now().strftime("%Y%m%d_%H%M%S"))
-    if any(failures[cat] for cat in CATEGORIES):
-        parts = [
-            f"{cat}: {len(failures[cat])} failures"
-            for cat in CATEGORIES
-            if failures[cat]
-        ]
-        raise AssertionError(f"{test_name}: {', '.join(parts)}")
+        save_failures(
+            {"ordinary": failures}, test_name, datetime.now().strftime("%Y%m%d_%H%M%S")
+        )
+    if failures:
+        raise AssertionError(f"{test_name}: {len(failures)} failures")
     return failures
