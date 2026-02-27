@@ -160,28 +160,27 @@ def furoo_step(case: Case) -> Case:
     elif not case.ibn.get("count", 0) and case.bint.get("count", 0):
         if case.bint.get("count", 0) == 1:
             case.bint["fard"] = frac(1, 2)
-            case.bint_taking_half = True
+            case.is_bint_taking_half = True
         else:
             case.bint["fard"] = frac(2, 3)
-            case.bints_taking_twothirds = True
-
+            
     if case.asib is None and (case.ibn.get("count", 0) or case.bibn.get("count", 0)):
         if case.ibn.get("count", 0):
             if not case.bibn.get("count", 0):
                 case.asib = "iibn"
             else:
                 case.asib = "iibn-bibn"
-        elif case.bibn.get("count", 0) and case.bint_taking_half:
+        elif case.bibn.get("count", 0) and case.is_bint_taking_half:
             case.bibn["fard"] = frac(1, 6)
-            case.bints_taking_twothirds = True
-        elif case.bibn.get("count", 0) and not (case.bint_taking_half or case.bints_taking_twothirds):
+            case.is_bint_taking_twothirds = True
+        elif case.bibn.get("count", 0) and not (case.is_bint_taking_half or case.is_bint_taking_twothirds):
             if case.bibn.get("count", 0) == 1:
                 case.bibn["fard"] = frac(1, 2)
-                case.bint_taking_half = True
+                case.is_bint_taking_half = True
             else:
                 case.bibn["fard"] = frac(2, 3)
-                case.bints_taking_twothirds = True
-        elif case.bints_taking_twothirds and case.bibn.get("count", 0):
+                case.is_bint_taking_twothirds = True
+        elif case.is_bint_taking_twothirds and case.bibn.get("count", 0):
             pass
 
     if case.asib is None:
@@ -194,10 +193,10 @@ def furoo_step(case: Case) -> Case:
                 case.asib = "iiibn-biibn"
             if case.bibn.get("count", 0) and case.biibn.get("count", 0):
                 case.asib = "iiibn-biibn-bibn"
-        elif case.biibn.get("count", 0) and case.bint_taking_half and not case.bints_taking_twothirds:
+        elif case.biibn.get("count", 0) and case.is_bint_taking_half and not case.is_bint_taking_twothirds:
             case.biibn["fard"] = frac(1, 6)
-            case.bints_taking_twothirds = True
-        elif case.biibn.get("count", 0) and not (case.bints_taking_twothirds or case.bint_taking_half):
+            case.is_bint_taking_twothirds = True
+        elif case.biibn.get("count", 0) and not (case.is_bint_taking_twothirds or case.is_bint_taking_half):
             if case.biibn.get("count", 0) == 1:
                 case.biibn["fard"] = frac(1, 2)
             else:
@@ -215,9 +214,6 @@ def hawashi_step(case: Case) -> Case:
     - Uncles
     """
 
-    case.shaqiqa_taking_half = False
-    case.shaqiqas_taking_twothirds = False
-
     if case.shaqiq.get("count", 0) and not case.shaqiqa.get("count", 0):
         case.asib = "shaqiq"
     elif case.shaqiq.get("count", 0) and case.shaqiqa.get("count", 0):
@@ -225,14 +221,14 @@ def hawashi_step(case: Case) -> Case:
     elif not case.shaqiq.get("count", 0) and case.shaqiqa.get("count", 0) and not case.has_any_furoo:
         if case.shaqiqa.get("count", 0) == 1:
             case.shaqiqa["fard"] = frac("1/2")
-            case.shaqiqa_taking_half = True
+            case.is_shaqiqa_taking_half = True
         elif case.shaqiqa.get("count", 0) > 1:
             case.shaqiqa["fard"] = frac("2/3")
-            case.shaqiqas_taking_twothirds = True 
+            case.is_shaqiqa_taking_twothirds = True 
     elif (
         case.asib is None
         and case.shaqiqa.get("count", 0)
-        and (case.bint_taking_half or case.bints_taking_twothirds) # @adam double check these
+        and (case.is_bint_taking_half or case.is_bint_taking_twothirds) # @adam double check these
     ):
         case.asib = "shaqiqa"
 
@@ -245,7 +241,7 @@ def hawashi_step(case: Case) -> Case:
             case.asib is None
             and case.uliab.get("count", 0)
             and not case.shaqiqa.get("count", 0)
-            and (case.bint_taking_half or case.bints_taking_twothirds)
+            and (case.is_bint_taking_half or case.is_bint_taking_twothirds)
         ):
             case.asib = "uliab"
         elif not case.aliab.get("count", 0):
@@ -253,12 +249,12 @@ def hawashi_step(case: Case) -> Case:
                 case.uliab.get("count", 0)
                 and not case.has_any_furoo
                 and case.shaqiqa.get("count", 0)
-                and case.shaqiqa_taking_half
+                and case.is_shaqiqa_taking_half
                 and not any(
                     (
-                        case.shaqiqas_taking_twothirds,
-                        case.bints_taking_twothirds,
-                        case.bint_taking_half,
+                        case.is_shaqiqa_taking_twothirds,
+                        case.is_bint_taking_twothirds,
+                        case.is_bint_taking_half,
                     )
                 )
             ):

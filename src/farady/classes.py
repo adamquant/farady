@@ -56,12 +56,6 @@ class Case:
     radd_heirs: list = field(default_factory=list)
     total_shares_radd: int = 0
 
-    # Calculation state tracking attributes
-    shaqiqa_taking_half: bool | None = None
-    shaqiqas_taking_twothirds: bool | None = None
-    bint_taking_half: bool | None = None
-    bints_taking_twothirds: bool | None = None
-
     @property
     def has_husband(self) -> bool:
         return bool(self.zawj.get("count", 0))
@@ -206,7 +200,7 @@ class Case:
         return any(heir.get("fard") == frac(1, 2) for heir in bint_heirs)
 
     @property
-    def is_bints_taking_twothirds(self) -> bool:
+    def is_bint_taking_twothirds(self) -> bool:
         bint_heirs = [self.bint, self.bibn, self.biibn]
         return any(heir.get("fard") == frac(2, 3) for heir in bint_heirs)
 
