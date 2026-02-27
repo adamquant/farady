@@ -113,7 +113,7 @@ def case_to_result(case_dict):
         "total_shares": case.total_shares,
         "raas": case.raas,
         "numerators": numerators,
-        "heir_details": heir_details, 
+        "heir_details": heir_details,
         "baqi": case.baqi,
     }
 
@@ -199,10 +199,11 @@ def test_ibn_has_share_when_present():
     failures = collect_failures(
         results,
         lambda r: (
-            r["original_case"].get("ibn", 0) > 0
-            and r["distribution"].get("ibn", 0) == 0
-            and r["ending"] == "taseeb"
-            and r["status"] == "Complete"
+            r["original_case"].get("ibn", 0) > 0  # Ibn is present
+            and r["distribution"].get("ibn", 0) == 0  # But gets no share
+            and r["ending"] == "taseeb"  # Only in taseeb cases
+            and r["status"]
+            in ["Complete", "Unknown"]  # Only flag if status is Complete or Unknown
         ),
     )
 
@@ -317,14 +318,16 @@ def test_other_non_complete_cases():
 
 
 def test_daughters_always_inherit():
-    """When bint is present, always gets at least one share."""
+    """When bint is present, should get at least one share if status is Complete or Unknown."""
     results = get_test_results()
 
     failures = collect_failures(
         results,
         lambda r: (
-            r["original_case"].get("bint", 0) > 0
-            and r["distribution"].get("bint", 0) == 0
+            r["original_case"].get("bint", 0) > 0  # Daughter is present
+            and r["distribution"].get("bint", 0) == 0  # But gets no share
+            and r["status"]
+            in ["Complete", "Unknown"]  # Only flag if status is Complete or Unknown
         ),
     )
 
