@@ -178,6 +178,7 @@ def calculate(case: Case) -> Case:
 
     elif case.baqi > 0 and case.total_shares > 0:
         case = radd_step(case)
+        case.ending = "radd"
 
     case.status = _determine_status(case)
 
