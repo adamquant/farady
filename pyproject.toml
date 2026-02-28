@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "farady"
-version = "0.1.0"
+version = "1.0.0"
 description = "Islamic Inheritance Distribution Calculator (Faraid)"
 authors = ["SunnaAssets"]
 readme = "README.md"
@@ -70,3 +70,9 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.coverage.html]
+directory = "htmlcov"
