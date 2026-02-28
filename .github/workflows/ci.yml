@@ -33,7 +33,6 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         file: ./coverage.xml
-        format: cobertura
     
     - name: Type check with mypy
       run: poetry run mypy src/farady --strict
