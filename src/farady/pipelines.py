@@ -59,7 +59,8 @@ from farady.processing import (
 )
 
 from farady.classes import Case
-from farady.calculation_functions import (convert_fard_to_shares,
+from farady.core_functions import (
+    convert_fard_to_shares,
     zawjayn_step,
     kalala_step,
     usool_step,
@@ -67,7 +68,8 @@ from farady.calculation_functions import (convert_fard_to_shares,
     hawashi_step,
     taseeb_step,
     awl_step,
-    radd_step)
+    radd_step,
+)
 
 _logger = get_logger(__name__)
 
@@ -88,38 +90,51 @@ def calculate(case: Case) -> Case:
     ###=== VALIDATION +++###
 
     # Validate umm (mother) - should not be more than 1
-    umm_count = case.umm.get('count', 0) if case.umm else 0
-    if not (case.umm is None or (isinstance(umm_count, (int, float)) and 0 <= umm_count <= 1)):
+    umm_count = case.umm.get("count", 0) if case.umm else 0
+    if not (
+        case.umm is None
+        or (isinstance(umm_count, (int, float)) and 0 <= umm_count <= 1)
+    ):
         case.ending = "invalid_input"
         case.status = "Failed"
         return case
     # Validate ab (father) - should not be more than 1
-    ab_count = case.ab.get('count', 0) if case.ab else 0
-    if not (case.ab is None or (isinstance(ab_count, (int, float)) and 0 <= ab_count <= 1)):
+    ab_count = case.ab.get("count", 0) if case.ab else 0
+    if not (
+        case.ab is None or (isinstance(ab_count, (int, float)) and 0 <= ab_count <= 1)
+    ):
         case.ending = "invalid_input"
         case.status = "Failed"
         return case
     # Validate zawj (husband) - should not be more than 1
-    zawj_count = case.zawj.get('count', 0) if case.zawj else 0
-    if not (case.zawj is None or isinstance(zawj_count, bool) or 
-            (isinstance(zawj_count, (int, float)) and 0 <= zawj_count <= 1)):
+    zawj_count = case.zawj.get("count", 0) if case.zawj else 0
+    if not (
+        case.zawj is None
+        or isinstance(zawj_count, bool)
+        or (isinstance(zawj_count, (int, float)) and 0 <= zawj_count <= 1)
+    ):
         case.ending = "invalid_input"
         case.status = "Failed"
         return case
     # Validate zawja (wives) - should not be more than 4
-    zawja_count = case.zawja.get('count', 0) if case.zawja else 0
-    if not (case.zawja is None or isinstance(zawja_count, bool) or 
-            (isinstance(zawja_count, (int, float)) and 0 <= zawja_count <= 4)):
+    zawja_count = case.zawja.get("count", 0) if case.zawja else 0
+    if not (
+        case.zawja is None
+        or isinstance(zawja_count, bool)
+        or (isinstance(zawja_count, (int, float)) and 0 <= zawja_count <= 4)
+    ):
         case.ending = "invalid_input"
         case.status = "Failed"
         return case
     # Validate jadd (paternal grandfather) - should not be more than 1
-    jadd_count = case.jadd.get('count', 0) if case.jadd else 0
-    if not (case.jadd is None or (isinstance(jadd_count, (int, float)) and 0 <= jadd_count <= 1)):
+    jadd_count = case.jadd.get("count", 0) if case.jadd else 0
+    if not (
+        case.jadd is None
+        or (isinstance(jadd_count, (int, float)) and 0 <= jadd_count <= 1)
+    ):
         case.ending = "invalid_input"
         case.status = "Failed"
         return case
-
 
     ###+++ SPECIAL CASES +++###
 
@@ -145,7 +160,7 @@ def calculate(case: Case) -> Case:
         case.ending = "mushtaraka"
 
     ###=== REGULAR CASES ===###
-    
+
     else:
         if case.is_married:
             case = zawjayn_step(case)
@@ -157,7 +172,7 @@ def calculate(case: Case) -> Case:
             case = furoo_step(case)
 
         if case.has_hawashi:
-            if not (case.has_m_usool or case.has_m_furoo): # hanbali for now @adam
+            if not (case.has_m_usool or case.has_m_furoo):  # hanbali for now @adam
                 case = hawashi_step(case)
 
         if case.is_kalala:
@@ -171,7 +186,7 @@ def calculate(case: Case) -> Case:
         case = awl_step(case)
 
     elif case.asib:
-        case = taseeb_step(case) 
+        case = taseeb_step(case)
 
     elif case.baqi > 0 and case.total_shares > 0:
         case = radd_step(case)
@@ -440,6 +455,6 @@ def calculate_from_dict(family_data: dict) -> Case:
         return case
 
     case = Case.from_dict(family_data)
-    
-    #distribution = _build_distribution(calculate(case))
+
+    # distribution = _build_distribution(calculate(case))
     return calculate(case)
