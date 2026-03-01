@@ -430,3 +430,5 @@ AGPLv3 is a strong copyleft license. If you:
 - Modify it: Must distribute your modifications under AGPLv3
 
 For traditional commercial licensing (to avoid copyleft obligations), please contact the author.
+## PyPI Release Test
+This is a test entry for verifying the PyPI release workflow.
