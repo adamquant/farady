@@ -6,12 +6,12 @@ import numpy
 extensions = [
     Extension(
         "farady.core_functions",
-        ["src/farady/core_functions.pyx"],
+        ["src/farady/core_functions.py"],
         include_dirs=[numpy.get_include()],
     ),
     Extension(
         "farady.pipelines",
-        ["src/farady/pipelines.pyx"],
+        ["src/farady/pipelines.py"],
         include_dirs=[numpy.get_include()],
     ),
 ]
