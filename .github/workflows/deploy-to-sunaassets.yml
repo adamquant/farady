@@ -59,6 +59,9 @@ jobs:
       with:
         python-version: '3.13'
     
+    - name: Install farady
+      run: pip install -e .
+    
     - name: Configure Git
       run: |
         git config user.name "github-actions[bot]"
