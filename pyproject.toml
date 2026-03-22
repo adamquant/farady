@@ -15,7 +15,7 @@ classifiers = [
 packages = [{include = "farady", from = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = "^3.14"
 numpy = "^2.4.2"
 matplotlib = "^3.10.8"
 seaborn = "^0.13.2"
@@ -40,10 +40,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 100
-target-version = ['py313']
+target-version = ['py314']
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 strict = true
 warn_return_any = true
 warn_unused_ignores = true

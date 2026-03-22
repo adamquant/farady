@@ -62,6 +62,8 @@ from farady.processing import (
     load_csv_cases,
     process_csv_results,
 )
+
+InheritanceCase = Case
 from farady.logging_config import (
     get_logger,
     get_log_dir,
@@ -69,6 +71,7 @@ from farady.logging_config import (
 
 __all__ = [
     "Case",
+    "InheritanceCase",
     "calculate",
     "calculate_inheritance",
     "calculate_from_dict",
