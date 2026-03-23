@@ -9,6 +9,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
     - uses: actions/checkout@v4
     
@@ -18,15 +20,10 @@ jobs:
         python-version: '3.14'
     
     - name: Install Poetry
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry
-    
-    - name: Install dependencies
-      run: poetry install
+      run: pip install poetry
     
     - name: Build package
       run: poetry build
     
     - name: Publish to PyPI
-      run: poetry publish
+      uses: pypa/gh-action-pypi-publish@release/v1
