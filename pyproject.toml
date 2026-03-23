@@ -1,54 +1,78 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "farady"
-version = "0.1.0"
+version = "1.0.0"
 description = "Islamic Inheritance Distribution Calculator (Faraid)"
+authors = ["Adam Ahmed <admin@sunnaassets.com>"]
 readme = "README.md"
-license = {text = "MIT"}
-requires-python = ">=3.9"
-authors = [
-    {name = "SunnaAssets"}
-]
-keywords = ["inheritance", "islamic", "faraid", "estate-planning"]
+license = "GNU Affero General Public License v3.0"
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+    "Intended Audience :: Developers",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering :: Mathematics",
 ]
+packages = [{include = "farady", from = "src"}]
 
-dependencies = []
+[tool.poetry.dependencies]
+python = "^3.14"
+numpy = "^2.4.2"
+matplotlib = "^3.10.8"
+seaborn = "^0.13.2"
 
-[project.optional-dependencies]
-dev = ["pytest", "pytest-cov", "black", "mypy"]
+[tool.poetry.group.dev.dependencies]
+pytest = ">=9.0.2,<10.0.0"
+pytest-cov = ">=7.0.0,<8.0.0"
+numpy = ">=2.4.2,<3.0.0"
+pandas = ">=2.0.0,<3.0.0"
+ipython = ">=8.0.0,<9.0.0"
+jupyter = ">=1.0.0,<2.0.0"
+black = ">=25.0.0"
+mypy = ">=1.0.0"
 
-[project.scripts]
+[tool.poetry.scripts]
 farady = "farady.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 100
-target-version = ['py39']
+target-version = ['py314']
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.14"
+strict = true
 warn_return_any = true
-warn_unuseddisallow_untyped_configs = true
-_defs = false
+warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-addopts = "-v --tb=short"
+norecursedirs = ["tests_wip", ".venv", "*.egg-info"]
+addopts = "-v --tb=short --cov=src --cov-report=term-missing"
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = ["tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.coverage.html]
+directory = "htmlcov"

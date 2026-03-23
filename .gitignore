@@ -45,6 +45,8 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+manual_reviews/
+
 
 # Translations
 *.mo
@@ -53,12 +55,12 @@ coverage.xml
 # Environments
 .env
 .venv
+.venv313
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
-
 # IDE
 .idea/
 .vscode/
@@ -71,3 +73,21 @@ Thumbs.db
 
 # Personal todo list
 todo.md
+
+# Local debugging logs
+logs/
+*.log
+
+# Test output (can be large)
+tests/output/
+!tests/output/review.ipynb
+
+# Generated version file (setuptools_scm)
+src/farady/_version.py
+
+# Local agent instructions (not committed)
+AGENTS.md
+agents.md
+
+# Admin directory
+/admin

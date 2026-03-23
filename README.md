@@ -1,5 +1,11 @@
 # Farady - Islamic Inheritance Distribution Calculator
 
+[![License: AGPLv3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](LICENSE)
+[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/release/python-3130/)
+[![CI](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
+[![Coverage](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
+[![Pytest](https://img.shields.io/badge/pytest-passing-success)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
+
 A Python library and CLI tool for calculating Islamic inheritance distribution according to Faraid (Islamic inheritance law).
 
 ## Table of Contents
@@ -8,13 +14,11 @@ A Python library and CLI tool for calculating Islamic inheritance distribution a
 - [Quick Start](#quick-start)
 - [API Reference](#api-reference)
   - [Core Classes](#core-classes)
-  - [Convenience Functions](#convenience-functions)
+  - [Main Functions](#main-functions)
   - [CSV/Batch Processing](#csvbatch-processing)
-- [InheritanceResult Fields](#inheritanceresult-fields)
-- [Input Parameters](#input-parameters)
+- [Case Fields](#case-fields)
 - [CLI Usage](#cli-usage)
 - [Examples](#examples)
-- [Development](#development)
 
 ---
 
@@ -38,14 +42,14 @@ pip install -e .
 from farady import calculate_from_dict
 
 # Simple case: 1 son, 1 daughter, wife
-result = calculate_from_dict({"ibn": 1, "bint": 1, "zawja": True})
+case = calculate_from_dict({"ibn": 1, "bint": 1, "zawja": True})
 
-print(result.distribution)   # {'zawja': 0.125, 'ibn': 0.5833, 'bint': 0.2917}
-print(result.ending)         # 'taseeb'
-print(result.total)          # 1.0
-print(result.denominator)    # 24
-print(result.status)         # 'Complete'
-print(result.asib)           # 'ibn-bint'
+# Access results
+print(case.distribution)   # {'zawja': 0.125, 'ibn': 0.5833, 'bint': 0.2917}
+print(case.ending)         # 'taseeb'
+print(case.total)          # 1.0
+print(case.status)         # 'Complete'
+print(case.asib)           # 'ibn-bint'
 ```
 
 ---
@@ -54,51 +58,91 @@ print(result.asib)           # 'ibn-bint'
 
 ### Core Classes
 
-#### `InheritanceCase`
+#### `Case`
 
 Data class representing a family configuration for inheritance calculation.
 
 ```python
-from farady import InheritanceCase
+from farady import Case
 
-case = InheritanceCase(
-    ibn=2,        # 2 sons
-    bint=1,       # 1 daughter
-    zawja=True,   # Wife present
-    umm=1,        # Mother present
-    ab=1,         # Father present
-)
+case = Case.from_dict({
+    "ibn": 2,        # 2 sons
+    "bint": 1,       # 1 daughter
+    "zawja": True,   # Wife present
+    "umm": 1,        # Mother present
+    "ab": 1,         # Father present
+})
 ```
+
+**Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `distribution` | `dict` | Heir -> share mapping |
+| `ending` | `str` | Distribution method used |
+| `asib` | `str` | Residual heir (if any) |
+| `total` | `float` | Total of all shares |
+| `status` | `str` | Calculation status |
+| `raas` | `int` | Total shares (denominator) |
+| `total_shares` | `int` | Sum of all allocated shares |
 
 **Class Methods:**
 
 | Method | Description |
 |--------|-------------|
-| `InheritanceCase(**kwargs)` | Create case with family member counts |
-| `InheritanceCase.from_dict(data)` | Create from dictionary (handles string conversion) |
+| `Case.from_dict(data)` | Create from dictionary (handles string conversion) |
 | `case.to_dict()` | Convert to dictionary (excludes zero/false values) |
-
-#### `InheritanceCalculator`
-
-Calculator class that processes inheritance cases.
-
-```python
-from farady import InheritanceCase, InheritanceCalculator
-
-case = InheritanceCase(ibn=2, bint=1, zawja=True)
-calculator = InheritanceCalculator()
-result = calculator.calculate(case)
-```
-
-**Methods:**
-
-| Method | Parameters | Returns |
-|--------|------------|---------|
-| `calculate(case)` | `InheritanceCase` | `InheritanceResult` |
 
 ---
 
-### Convenience Functions
+### Main Functions
+
+#### `calculate(case)`
+
+Main function to calculate inheritance distribution.
+
+```python
+from farady import Case, calculate
+
+case = Case.from_dict({"ibn": 2, "bint": 1, "zawja": True})
+result = calculate(case)
+```
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `case` | `Case` | Case object with family member counts |
+
+**Returns:** `Case` with populated results
+
+#### `calculate_from_dict(data)`
+
+Calculate inheritance from a dictionary. Useful for loading from JSON, CSV, or form data.
+
+```python
+from farady import calculate_from_dict
+
+# From a dictionary
+data = {"ibn": "2", "bint": "1", "zawja": "True"}  # Strings are converted
+case = calculate_from_dict(data)
+
+# From form data with mixed types
+data = {"ibn": 1, "bint": 2, "zawja": True, "umm": "1"}
+case = calculate_from_dict(data)
+```
+
+**String Conversion Rules:**
+
+| Field Type | String Value | Converted To |
+|------------|--------------|--------------|
+| Spouse (`zawj`, `zawja`) | `"True"`, `"1"`, `"yes"` | `True` |
+| Spouse (`zawj`, `zawja`) | `"False"`, `"0"`, `"no"`, `""` | `False` |
+| Count fields | `"1"`, `"2"`, etc. | `int` |
+| Count fields | `"True"`, `"yes"` | `1` |
+| Count fields | `"False"`, `"no"`, `""` | (excluded) |
+
+**Returns:** `Case` with populated results
 
 #### `calculate_inheritance(**kwargs)`
 
@@ -107,8 +151,10 @@ Calculate inheritance directly from keyword arguments.
 ```python
 from farady import calculate_inheritance
 
-result = calculate_inheritance(ibn=2, bint=1, zawja=True)
+case = calculate_inheritance(ibn=2, bint=1, zawja=True)
 ```
+
+**Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
@@ -133,37 +179,7 @@ result = calculate_inheritance(ibn=2, bint=1, zawja=True)
 | `zawj` | `bool` | Husband present |
 | `zawja` | `bool` | Wife present |
 
-**Returns:** `InheritanceResult`
-
----
-
-#### `calculate_from_dict(data)`
-
-Calculate inheritance from a dictionary. Useful for loading from JSON, CSV, or form data.
-
-```python
-from farady import calculate_from_dict
-
-# From a dictionary
-data = {"ibn": "2", "bint": "1", "zawja": "True"}  # Strings are converted
-result = calculate_from_dict(data)
-
-# From form data with mixed types
-data = {"ibn": 1, "bint": 2, "zawja": True, "umm": "1"}
-result = calculate_from_dict(data)
-```
-
-**String Conversion Rules:**
-
-| Field Type | String Value | Converted To |
-|------------|--------------|--------------|
-| Spouse (`zawj`, `zawja`) | `"True"`, `"1"`, `"yes"` | `True` |
-| Spouse (`zawj`, `zawja`) | `"False"`, `"0"`, `"no"`, `""` | `False` |
-| Count fields | `"1"`, `"2"`, etc. | `int` |
-| Count fields | `"True"`, `"yes"` | `1` |
-| Count fields | `"False"`, `"no"`, `""` | (excluded) |
-
-**Returns:** `InheritanceResult`
+**Returns:** `Case` with populated results
 
 ---
 
@@ -177,7 +193,7 @@ Load inheritance cases from a CSV file.
 from farady import load_csv_cases
 
 cases = load_csv_cases("tests/test_cases.csv")
-# Returns: List[InheritanceCase]
+# Returns: List[Case]
 
 for case in cases:
     print(case.to_dict())
@@ -196,9 +212,7 @@ ibn,bint,zawja,expected_total,notes
 - Extra columns (like `notes`, `expected_total`) are ignored
 - String values are converted using same rules as `from_dict()`
 
-**Returns:** `List[InheritanceCase]`
-
----
+**Returns:** `List[Case]`
 
 #### `process_csv_results(csv_path)`
 
@@ -211,8 +225,8 @@ results = process_csv_results("tests/test_cases.csv")
 
 for item in results:
     row = item["row_data"]       # Original CSV row (dict)
-    case = item["case"]           # InheritanceCase object
-    result = item["result"]       # InheritanceResult object
+    case = item["case"]          # Case object (before calculation)
+    result = item["result"]      # Case object (after calculation)
     
     print(f"Case: {row.get('notes')}")
     print(f"  Distribution: {result.distribution}")
@@ -226,118 +240,12 @@ for item in results:
 | Key | Type | Description |
 |-----|------|-------------|
 | `row_data` | `dict` | Original CSV row data |
-| `case` | `InheritanceCase` | Parsed case object |
-| `result` | `InheritanceResult` | Calculation result |
+| `case` | `Case` | Parsed case object |
+| `result` | `Case` | Calculated result case |
 
 ---
 
-## InheritanceResult Fields
-
-The `InheritanceResult` dataclass is returned by all calculation functions.
-
-```python
-@dataclass
-class InheritanceResult:
-    distribution: dict              # Heir -> share mapping
-    ending: Optional[str]           # Distribution method used
-    asib: Optional[str]             # Residual heir (if any)
-    total: float                    # Total of all shares
-    status: str                     # Calculation status
-    denominator: Optional[int]      # Total shares (raas)
-```
-
-### Field Details
-
-#### `distribution: Dict[str, float]`
-
-Dictionary mapping heir names (Arabic) to their fractional shares.
-
-```python
-result.distribution
-# {'zawja': 0.125, 'ibn': 0.5833, 'bint': 0.2917}
-```
-
-#### `ending: Optional[str]`
-
-Describes how the distribution was finalized. Useful for debugging and understanding the calculation path.
-
-| Value | Description |
-|-------|-------------|
-| `"taseeb"` | Residual inheritance - remaining went to 'asib (residual heirs) |
-| `"awl"` | Reduction - total exceeded 1, shares were reduced proportionally |
-| `"radd"` | Return - there was leftover after fixed shares, returned to heirs |
-| `"umuriya1"` | Special case: father + mother + wife |
-| `"umuriya2"` | Special case: father + mother + husband |
-| `"mushtaraka"` | Special case: spouse + siblings sharing |
-| `"No valid heirs."` | No heirs found |
-| `None` | Not determined |
-
-```python
-result.ending  # 'taseeb'
-```
-
-#### `asib: Optional[str]`
-
-The residual heir ('aasib) who receives remaining shares after fixed portions.
-
-```python
-result.asib  # 'ibn-bint' means sons/daughters are residual heirs
-```
-
-#### `total: float`
-
-Sum of all distributed shares. Should be 1.0 for complete cases, may differ for awl cases.
-
-```python
-result.total  # 1.0
-```
-
-#### `status: str`
-
-| Value | Description |
-|-------|-------------|
-| `"Complete"` | Successfully distributed to 1.0 |
-| `"Failed"` | No valid heirs found |
-| `"Unknown"` | Distribution incomplete or unusual |
-
-```python
-result.status  # 'Complete'
-```
-
-#### `denominator: Optional[int]`
-
-The total number of shares (raas) for this inheritance case. Used to express shares as "X out of N" fractions.
-
-```python
-result.denominator  # 24
-
-# For will documents:
-# "Divide estate into 24 shares: 3 to Wife, 14 to Son(s), 7 to Daughter(s)"
-```
-
-### Result Methods
-
-#### `to_pretty_dict() -> Dict[str, float]`
-
-Convert distribution to human-readable names.
-
-```python
-result.to_pretty_dict()
-# {'Wife': 0.125, 'Son(s)': 0.5833, 'Daughter(s)': 0.2917}
-```
-
-#### `get_member_fraction(member: str) -> Optional[float]`
-
-Get share for a specific heir.
-
-```python
-result.get_member_fraction("ibn")    # 0.5833
-result.get_member_fraction("zawja")  # 0.125
-```
-
----
-
-## Input Parameters
+## Case Fields
 
 ### Family Member Fields (Arabic Names)
 
@@ -381,13 +289,13 @@ PRETTY_NAMES = {
     'ab': 'Father',
     'jadd': 'Grandfather (nearest in relation)',
     'lium': 'Maternal Half-sibling(s)',
-    'shaqiqa': 'Full-sister(s)',
-    'shaqiq': 'Full-brother(s)',
+    'shaqiqa': 'Full Sister(s)',
+    'shaqiq': 'Full Brother(s)',
     'uliab': 'Paternal Half-sister(s)',
     'aliab': 'Paternal Half-brother(s)',
-    'ibnamm_sh': 'Full-nephew(s)',
-    'ibnamm_liab': 'Half-nephew(s)',
-    'amm': 'Uncle(s)',
+    'ibnamm_sh': 'Full Nephew',
+    'ibnamm_liab': 'Half Nephew',
+    'amm': 'Uncle',
     'zawj': 'Husband',
     'zawja': 'Wife',
 }
@@ -417,16 +325,16 @@ farady --ibn 1 --bint 2 --iibn 0 --bibn 0 --umm 1 --ab 1 --zawja
 ```python
 from farady import calculate_from_dict
 
-result = calculate_from_dict({"ibn": 1, "bint": 1, "zawja": True})
+case = calculate_from_dict({"ibn": 1, "bint": 1, "zawja": True})
 
-print(f"Distribution: {result.distribution}")
+print(f"Distribution: {case.distribution}")
 # Distribution: {'zawja': 0.125, 'ibn': 0.5833, 'bint': 0.2917}
 
-print(f"Ending: {result.ending}")
+print(f"Ending: {case.ending}")
 # Ending: taseeb
 
-print(f"Denominator: {result.denominator}")
-# Denominator: 24
+print(f"Raas: {case.raas}")
+# Raas: 24
 
 # For document generation:
 # "Divide into 24 shares: 3 to Wife, 14 to Son(s), 7 to Daughter(s)"
@@ -435,20 +343,20 @@ print(f"Denominator: {result.denominator}")
 ### Example 2: Awl Case (Shares Exceed 1)
 
 ```python
-result = calculate_from_dict({"bint": 2, "zawja": True})
+case = calculate_from_dict({"bint": 2, "zawja": True})
 
-print(f"Total: {result.total}")       # 1.125 (exceeds 1)
-print(f"Ending: {result.ending}")     # None (awl detected but not labeled)
+print(f"Total: {case.total}")       # 1.125 (exceeds 1)
+print(f"Ending: {case.ending}")     # awl
 ```
 
 ### Example 3: Radd Case (Leftover After Fixed Shares)
 
 ```python
-result = calculate_from_dict({"bint": 2})
+case = calculate_from_dict({"bint": 2})
 
-print(f"Distribution: {result.distribution}")  # {'bint': 1.0}
-print(f"Total: {result.total}")                # 1.0
-print(f"Ending: {result.ending}")              # 'taseeb'
+print(f"Distribution: {case.distribution}")  # {'bint': 1.0}
+print(f"Total: {case.total}")                # 1.0
+print(f"Ending: {case.ending}")              # radd
 # Two daughters: 2/3 fixed, remaining 1/3 returned via radd
 ```
 
@@ -486,37 +394,39 @@ form_data = {
     "umm": "1",
 }
 
-result = calculate_from_dict(form_data)
+case = calculate_from_dict(form_data)
 
-# Use denominator for will document
-if result.denominator:
+# Use raas for will document
+if case.raas:
     shares_text = []
-    for heir, share in result.distribution.items():
-        num_shares = round(share * result.denominator)
+    for heir, share in case.distribution.items():
+        num_shares = round(share * case.raas)
         shares_text.append(f"{num_shares} shares to {heir}")
     
-    print(f"Divide into {result.denominator} shares:")
+    print(f"Divide into {case.raas} shares:")
     print("\n".join(shares_text))
-```
-
----
-
-## Development
-
-Run tests:
-
-```bash
-pytest tests/ -v
-```
-
-Run specific test:
-
-```bash
-pytest tests/test_farady.py::TestCalculateFromDict::test_son_daughter_wife -v
 ```
 
 ---
 
 ## License
 
-Creative Commons Attribution Non-Commercial Share Alike 4.0
+**GNU Affero General Public License v3.0 (AGPLv3)**
+
+This software is licensed under AGPLv3. See the [LICENSE](LICENSE) file for the full text.
+
+### Key Points of AGPLv3
+
+- **Commercial Use Allowed**: You may use this software for commercial purposes
+- **Source Required**: If you modify this software and run it as a network service, you must make your modifications available to users
+- **Share Alike**: If you distribute modified versions, they must be licensed under AGPLv3
+- **Attribution**: You must give appropriate credit to Adam Ahmed
+
+### Enterprise & Commercial Use
+
+AGPLv3 is a strong copyleft license. If you:
+- Use it as-is: No restrictions
+- Host it as a service: You must provide source code to users
+- Modify it: Must distribute your modifications under AGPLv3
+
+For traditional commercial licensing (to avoid copyleft obligations), please contact the author.

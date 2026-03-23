@@ -1,3 +1,18 @@
+# Copyright (C) 2024  Adam Ahmed
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 """Farady CLI - Command-line interface for Islamic Inheritance Calculator.
 
 Usage:
@@ -41,21 +56,24 @@ Examples:
     farady --ibn 1 --bint 2 --ab 1 --umm 1 --zawja
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
-from typing import Union, Dict, Any
+from collections.abc import Sequence
 
-from farady.distribution import InheritanceCase, InheritanceCalculator, PRETTY_NAMES
+from farady.classes import Case
+from farady.pipelines import calculate_from_dict
+from farady.pipelines import _build_distribution
+from farady.processing import PRETTY_NAMES
 
 
-def format_fraction(value: Union[float, Any]) -> str:
+def format_fraction(value: float) -> str:
     """Format a fractional value for display."""
-    if hasattr(value, "numerator"):
-        return f"{float(value):.4f}"
     return f"{float(value):.4f}"
 
 
-def format_percentage(value: Union[float, Any]) -> str:
+def format_percentage(value: float) -> str:
     """Format a value as a percentage."""
     return f"{float(value) * 100:.2f}%"
 
@@ -220,12 +238,8 @@ def create_parser() -> argparse.ArgumentParser:
     )
 
     spouses_group = parser.add_argument_group("Spouses")
-    spouses_group.add_argument(
-        "--zawj", "--husband", action="store_true", help="Husband present"
-    )
-    spouses_group.add_argument(
-        "--zawja", "--wife", action="store_true", help="Wife present"
-    )
+    spouses_group.add_argument("--zawj", "--husband", action="store_true", help="Husband present")
+    spouses_group.add_argument("--zawja", "--wife", action="store_true", help="Wife present")
 
     parser.add_argument(
         "-v",
@@ -234,12 +248,19 @@ def create_parser() -> argparse.ArgumentParser:
         help="Show verbose output with calculation details",
     )
 
+    debug_group = parser.add_argument_group("Debugging")
+    debug_group.add_argument(
+        "--debug",
+        action="store_true",
+        help="Show full debug output with complete Case object details",
+    )
+
     return parser
 
 
-def get_provided_members(args: argparse.Namespace) -> Dict[str, Any]:
+def get_provided_members(args: argparse.Namespace) -> dict[str, int | bool]:
     """Extract family members that were provided (non-zero or True)."""
-    provided = {}
+    provided: dict[str, int | bool] = {}
 
     mappings = {
         "ibn": "ibn",
@@ -276,9 +297,31 @@ def get_provided_members(args: argparse.Namespace) -> Dict[str, Any]:
     return provided
 
 
-def print_results(result, provided_members: Dict[str, Any], verbose: bool = False):
-    """Print the inheritance distribution results as a table."""
+def print_results(
+    result_case,
+    provided_members: dict[str, int | bool],
+    verbose: bool = False,
+    debug: bool = False,
+) -> None:
+    """Print the inheritance distribution results."""
 
+    # Debug mode: Show full Case object
+    if debug:
+        print("\n" + "=" * 60)
+        print("         FULL DEBUG OUTPUT")
+        print("=" * 60)
+        print(f"Case object: {result_case}")
+        print(f"Distribution card: {_build_distribution(result_case)}")
+        print(f"Total shares: {result_case.total_shares}")
+        print(f"Raas: {result_case.raas}")
+        print(f"Total fraction: {result_case.total}")
+        print(f"Ending: {result_case.ending}")
+        print(f"Asib: {result_case.asib}")
+        print(f"Status: {result_case.status}")
+        print()
+        return
+
+    # Standard output
     print("\n" + "=" * 60)
     print("         ISLAMIC INHERITANCE DISTRIBUTION")
     print("=" * 60)
@@ -293,36 +336,39 @@ def print_results(result, provided_members: Dict[str, Any], verbose: bool = Fals
             else:
                 print(f"  {pretty_name}: {value}")
 
+    # Build distribution
+    distribution = _build_distribution(result_case)
+
     print("\n" + "-" * 60)
     print(f"{'Beneficiary':<35} {'Share':>10} {'Percentage':>12}")
     print("-" * 60)
 
-    sorted_dist = sorted(
-        result.distribution.items(), key=lambda x: float(x[1]), reverse=True
-    )
+    sorted_dist = sorted(distribution.items(), key=lambda x: float(x[1]), reverse=True)
 
+    raas = result_case.raas
     for member, share in sorted_dist:
         pretty_name = PRETTY_NAMES.get(member, member)
-        frac_str = format_fraction(share)
-        pct_str = format_percentage(share)
+        frac_str = str(share)
+        pct_str = format_percentage(float(share) / float(raas) if raas > 0 else 0.0)
         print(f"{pretty_name:<35} {frac_str:>10} {pct_str:>12}")
 
     print("-" * 60)
-    print(
-        f"{'Total':<35} {format_fraction(result.total):>10} {format_percentage(result.total):>12}"
-    )
+    total_shares = result_case.total_shares
+    total_fraction = result_case.total
+    print(f"{'Total':<35} {total_shares:>10} {format_percentage(total_fraction):>12}")
     print("=" * 60)
 
-    if verbose or result.ending:
-        print(f"\nDistribution Method: {result.ending or 'Standard'}")
-        if result.asib:
-            print(f"Residual Heir (Asib): {PRETTY_NAMES.get(result.asib, result.asib)}")
-        print(f"Status: {result.status}")
+    # Verbose mode: Show additional calculation details
+    if verbose:
+        print(f"\nDistribution Method: {result_case.ending or 'Standard'}")
+        if result_case.asib:
+            print(f"Residual Heir (Asib): {PRETTY_NAMES.get(result_case.asib, result_case.asib)}")
+        print(f"Status: {result_case.status}")
 
     print()
 
 
-def main(argv=None):
+def main(argv: Sequence[str] | None = None) -> int:
     """Main entry point for the CLI."""
     parser = create_parser()
     args = parser.parse_args(argv)
@@ -334,13 +380,12 @@ def main(argv=None):
         print("\nError: At least one family member must be specified.")
         return 1
 
-    case = InheritanceCase(**provided_members)
-    calculator = InheritanceCalculator()
-    result = calculator.calculate(case)
+    # Create case and calculate
+    result_case = calculate_from_dict(provided_members)
 
-    print_results(result, provided_members, args.verbose)
+    print_results(result_case, provided_members, args.verbose, args.debug)
 
-    if result.status != "Complete":
+    if result_case.status != "Complete":
         return 1
 
     return 0

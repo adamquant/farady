@@ -13,12 +13,21 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Backward compatibility module.
+__all__ = ["__version__", "__version_tuple__", "version", "version_tuple"]
 
-This module re-exports PRETTY_NAMES from farady.processing for backward
-compatibility with older import paths.
-"""
+TYPE_CHECKING = False
+if TYPE_CHECKING:
+    from typing import Tuple
+    from typing import Union
 
-from farady.processing import PRETTY_NAMES
+    VERSION_TUPLE = Tuple[Union[int, str], ...]
+else:
+    VERSION_TUPLE = object
 
-__all__ = ["PRETTY_NAMES"]
+version: str
+__version__: str
+__version_tuple__: VERSION_TUPLE
+version_tuple: VERSION_TUPLE
+
+__version__ = version = "0.1.0.post1.dev0+g670ee68.d20260223"
+__version_tuple__ = version_tuple = (0, 1, 0, "post1", "dev0", "g670ee68.d20260223")
