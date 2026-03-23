@@ -4,7 +4,10 @@ version = "1.0.0"
 description = "Islamic Inheritance Distribution Calculator (Faraid)"
 authors = ["Adam Ahmed <admin@sunnaassets.com>"]
 readme = "README.md"
-license = "GNU Affero General Public License v3.0"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/adamquant/farady"
+homepage = "https://github.com/adamquant/farady"
+keywords = ["islamic", "inheritance", "faraid", "estate", "calculator"]
 classifiers = [
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Programming Language :: Python :: 3",
