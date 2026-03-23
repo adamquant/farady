@@ -1,0 +1,21 @@
+{np.str_('umm'): np.int64(0), np.str_('bibn'): np.int64(0), np.str_('ibnamm_liab'): np.int64(7), np.str_('jadd'): np.int64(0)}
+(farady-py3.11) user@users-MacBook-Pro farady-dev % poetry run python3 tests/monte.py
+{np.str_('uliab'): np.int64(3), np.str_('shaqiqa'): np.int64(2), np.str_('ab'): np.int64(1), np.str_('ibnamm_sh'): np.int64(4), np.str_('bibn'): np.int64(8), np.str_('aliab'): np.int64(3), np.str_('iiibn'): np.int64(8), np.str_('lium'): np.int64(1), np.str_('biibn'): np.int64(9), np.str_('jadda'): np.int64(7), np.str_('bint'): np.int64(9), np.str_('iibn'): np.int64(5), np.str_('ibnamm_liab'): np.int64(8)}
+(farady-py3.11) user@users-MacBook-Pro farady-dev % poetry run python3 tests/monte.py
+{np.str_('bibn'): np.int64(6), np.str_('lium'): np.int64(7), np.str_('jadd'): np.int64(8), np.str_('shaqiq'): np.int64(0), np.str_('umm'): np.int64(5), np.str_('ibnamm_liab'): np.int64(7), np.str_('iiibn'): np.int64(9), np.str_('uliab'): np.int64(1), np.str_('iibn'): np.int64(8), np.str_('aliab'): np.int64(5)}
+InheritanceResult(distribution={}, ending='invalid_input', asib=None, total=0.0, status='Failed', denominator=None)
+0.0
+(farady-py3.11) user@users-MacBook-Pro farady-d
+(farady-py3.11) user@users-MacBook-Pro farady-dev % poetry run python3 tests/monte.py
+{np.str_('bint'): np.int64(7), np.str_('shaqiq'): np.int64(9), np.str_('iiibn'): np.int64(1), np.str_('uliab'): np.int64(3), np.str_('ibnamm_liab'): np.int64(5), np.str_('shaqiqa'): np.int64(7), np.str_('jadda'): np.int64(9), np.str_('jadd'): np.int64(5), np.str_('iibn'): np.int64(5), np.str_('aliab'): np.int64(2), np.str_('ibn'): np.int64(3), np.str_('ibnamm_sh'): np.int64(0), np.str_('umm'): np.int64(5), np.str_('ab'): np.int64(6), np.str_('bibn'): np.int64(9)}
+InheritanceResult(distribution={'umm': 0.1667, 'ab': 0.1667, 'ibn': 0.3077, 'bint': 0.359}, ending='taseeb', asib='ibn-bint', total=1.0001, status='Complete', denominator=78)
+1.0001
+(farady-py3.11) user@users-MacBook-Pro farady-dev % poetry run python3 tests/monte.py
+{np.str_('ab'): np.int64(5), np.str_('bibn'): np.int64(2), np.str_('umm'): np.int64(1), np.str_('iiibn'): np.int64(3), np.str_('ibnamm_liab'): np.int64(4), np.str_('iibn'): np.int64(8), np.str_('uliab'): np.int64(5), np.str_('ibn'): np.int64(0), np.str_('shaqiq'): np.int64(3)}
+InheritanceResult(distribution={'umm': 0.1667, 'ab': 0.1667, 'zawj': 0.25, 'iibn': 0.3704, 'bibn': 0.0463}, ending='taseeb', asib='iibn-bibn', total=1.0001, status='Complete', denominator=108)
+1.0001
+(farady-py3.11) user@users-MacBook-Pro farady-dev % poetry run python3 tests/monte.py
+{np.str_('biibn'): np.int64(2), np.str_('shaqiq'): np.int64(7), np.str_('ibnamm_sh'): np.int64(2), np.str_('bint'): np.int64(4), np.str_('amm'): np.int64(1), np.str_('jadd'): np.int64(4), np.str_('jadda'): np.int64(4), np.str_('iibn'): np.int64(8), np.str_('ibnamm_liab'): np.int64(2), np.str_('bibn'): np.int64(3), np.str_('umm'): np.int64(1)}
+InheritanceResult(distribution={'bint': 0.5333, 'umm': 0.1333, 'jadd': 0.1333, 'zawj': 0.2}, ending='awl', asib='iibn-bibn', total=0.9999, status='Complete', denominator=15)
+0.9999
+(farady-py3.11) user@users-MacBook-Pro farady-dev % 
