@@ -1,10 +1,8 @@
 # Farady - Islamic Inheritance Distribution Calculator
 
 [![License: AGPLv3](https://img.shields.io/badge/License-AGPLv3-blue.svg)](LICENSE)
-[![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/release/python-3130/)
-[![CI](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml/badge.svg)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
-[![Coverage](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
-[![Pytest](https://img.shields.io/badge/pytest-passing-success)](https://github.com/adamquant/farady-dev/actions/workflows/ci.yml)
+[![Python 3.14](https://img.shields.io/badge/python-3.14-blue.svg)](https://www.python.org/downloads/release/python-3140/)
+[![CI](https://github.com/adamquant/farady/actions/workflows/ci.yml/badge.svg)](https://github.com/adamquant/farady/actions/workflows/ci.yml)
 
 A Python library and CLI tool for calculating Islamic inheritance distribution according to Faraid (Islamic inheritance law).
 
@@ -25,17 +23,21 @@ A Python library and CLI tool for calculating Islamic inheritance distribution a
 
 ## Branching Model
 
-This project uses a hybrid trunk-based + GitFlow branching model:
-
 | Branch | Purpose |
 |--------|---------|
-| `main` | Main development branch |
-| `release-sa` | Release candidate for SA integration |
-| `prod-sa` | Production deployment for SA integration |
-| `release-pypi` | Release candidate for PyPI |
-| `prod-pypi` | Production for PyPI distribution |
+| `main` | Development work |
+| `release-pypi` | Test PyPI publishing |
+| `prod-pypi` | PyPI production (tag `v*` to release) |
+| `release-sa` | SunnaAssets releases |
 
-Contributors submit PRs to `main`. Release branches merge into production branches after testing.
+### PyPI Release Flow
+1. Work on `main`
+2. Merge to `release-pypi` to test publishing
+3. Merge to `prod-pypi` when ready
+4. Tag on `prod-pypi`: `git tag v1.0.0 && git push origin v1.0.0`
+
+### SA Release Flow
+Push to `release-sa` when SA might want new features.
 
 ---
 
