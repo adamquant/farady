@@ -1,0 +1,20 @@
+name: Release to SunnaAssets
+
+on:
+  push:
+    branches: [release-sa]
+
+jobs:
+  push-to-farady-sa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to farady-sa integration-testing
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git remote add farady-sa https://sunnaassets:$GH_TOKEN@github.com/sunnaassets/farady-sa.git
+          git push farady-sa release-sa:integration-testing
